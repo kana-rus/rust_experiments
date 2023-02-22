@@ -103,21 +103,26 @@ struct Path<'buf>(
 
 
 const _: () = {
-    impl<'router> Router<'router> for TrieTreeRouter<'router> {
-        fn register(&mut self, method: super::Method, route: &'static str, handler: Handler<'router>) {
-            match method {
-                Method::GET => self.GET.register(route, handler),
-                Method::POST => self.POST.register(route, handler),
-                Method::PATCH => self.PATCH.register(route, handler),
-                Method::DELETE => self.DELETE.register(route, handler),
+    impl<'router, const N: usize> Router<'router, N> for TrieTreeRouter<'router> {
+        fn register(&mut self, methods: [super::Method; N], routes: [&'static str; N], handlers: [Handler<'router>; N]) {
+            for i in 0..N {
+                match methods[i] {
+                    Method::GET => self.GET.register(routes[i], handlers[i]),
+                    Method::POST => self.POST.register(routes[i], handlers[i]),
+                    Method::PATCH => self.PATCH.register(routes[i], handlers[i]),
+                    Method::DELETE => self.DELETE.register(routes[i], handlers[i]),
+                }
             }
+                
         }
-        fn search<'buf>(&self, method: super::Method, path: &'buf str) -> Option<(&'router Handler, Vec<&'buf str>)> {
+        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&'router Handler, Vec<&'buf str>)> {
+            let (method, path) = request_line.split_once(' ').unwrap();
             match method {
-                Method::GET => self.GET.search(path),
-                Method::POST => self.POST.search(path),
-                Method::PATCH => self.PATCH.search(path),
-                Method::DELETE => self.DELETE.search(path),
+                "GET" => self.GET.search(path),
+                "POST" => self.POST.search(path),
+                "PATCH" => self.PATCH.search(path),
+                "DELETE" => self.DELETE.search(path),
+                _ => return None
             }
         }
     }

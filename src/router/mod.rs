@@ -2,11 +2,12 @@
 use std::{pin::Pin, future::Future};
 
 mod trie_tree; pub use trie_tree::TrieTreeRouter;
-mod regex_set; pub use regex_set::RegexSetRouter;
+mod regex_set; pub use regex_set::{RegexSetRouter1, RegexSetRouter2};
 
-pub trait Router<'router> {
-    fn register(&mut self, method: Method, route: &'static str, handler: Handler<'router>);
-    fn search<'buf>(&'router self, method: Method, path: &'buf str) -> Option<(&'router Handler, Vec<&'buf str>)>;
+pub trait Router<'router, const N: usize> {
+    fn register(&mut self, methods: [Method; N], routes: [&'static str; N], handlers: [Handler<'router>; N]);
+    /// `request_line` は末尾の ` HTTP/1.1` を除いた `{method} {path}` の形を想定
+    fn search<'buf>(&'router self, request_line: &'buf str) -> Option<(&'router Handler, Vec<&'buf str>)>;
 }
 
 pub enum Method {
