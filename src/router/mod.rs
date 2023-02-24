@@ -106,56 +106,51 @@ mod test {
 
     struct Case {
         request: &'static str,
-        expect:  Option<Result>,
+        expect:  Option<&'static str>,
     }
-    struct Result {
-        ok:   bool,
-        body: &'static str,
-    } impl Result {
-        fn is<F: Future<Output = Response>>(&self, response: F) -> bool {
-            match async_std::task::block_on(response) {
-                Response::Ok(body) => self.ok && self.body == body.as_str(),
-                Response::Err(body) => !self.ok && self.body == body.as_str(),
-            }
+    fn assert_response<F: Future<Output = Response>>( response: F, expect: &Option<&'static str>) {
+        match async_std::task::block_on(response) {
+            Response::Ok(body) => {
+                assert!(expect.is_some());
+                assert_eq!(&body.as_str(), expect.as_ref().unwrap());
+            },
+            Response::Err(_) => {
+                assert!(expect.is_none());
+            },
         }
     }
     const TEST_CASES: &'static [Case] = &[
-        Case {request: "GET /", expect: Some(Result { ok: true, body: "got `GET /`" })},
-
+        Case {request: "GET /", expect: Some("got `GET /`")},
+        Case {request: "GET /hc", expect: Some("got `GET /hc`")},
+        Case {request: "GET /api/users/1", expect: Some("got `GET /api/users/1`")},
+        Case {request: "POST /api/users/100", expect: None},
+        Case {request: "POST /api/users", expect: Some("got `POST /api/users`")},
+        Case {request: "PATCH /api/users", expect: None},
+        Case {request: "PATCH /api/users/42", expect: Some("got `PATCH /api/users/42`")},
+        Case {request: "GET /api/v2/users/1000", expect: Some("got `GET /api/users/1000`")},
+        Case {request: "GET /api/subtasks/2", expect: Some("got `GET /api/subtasks/2`")},
+        Case {request: "POST /api/subtasks/42/314", expect: Some("got `POST /api/subtasks/42/314`")},
+        Case {request: "POST /api/subtasks//314", expect: None},
     ];
 
     #[test]
-    fn test_trie_tree_router() {
-        let router = TrieTreeRouter::new([]);
+    fn trie_tree_router() {
+        let router = TrieTreeRouter::new(TEST_ROUTES());
         for Case { request, expect } in TEST_CASES {
             match <TrieTreeRouter as Router<TEST_ROUTES_SIZE>>::search(&router, &request) {
-                None => {
-                    assert!(expect.is_none());
-                },
-                Some((handle_func, _)) => {
-                    assert!(expect.is_some());
-                    assert!(expect.as_ref().unwrap().is(
-                        handle_func(Request::from(request))
-                    ));
-                },
+                None                   => assert!(expect.is_none()),
+                Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect),
             }
         }
     }
 
     #[test]
-    fn test_regex_set_router() {
+    fn regex_set_router() {
         let router = RegexSetRouter2::new(TEST_ROUTES());
         for Case { request, expect } in TEST_CASES {
             match router.search(&request) {
-                None => {
-                    assert!(expect.is_none());
-                },
-                Some((handle_func, _)) => {
-                    assert!(expect.is_some());
-                    assert!(expect.as_ref().unwrap().is(
-                        handle_func(Request::from(request))
-                    ));
-                },
+                None                   => assert!(expect.is_none()),
+                Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect),
             }
         }
     }
