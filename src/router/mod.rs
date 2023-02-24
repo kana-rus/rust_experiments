@@ -126,7 +126,7 @@ mod test {
         Case {request: "POST /api/users", expect: Some("got `POST /api/users`")},
         Case {request: "PATCH /api/users", expect: None},
         Case {request: "PATCH /api/users/42", expect: Some("got `PATCH /api/users/42`")},
-        Case {request: "GET /api/v2/users/1000", expect: Some("got `GET /api/users/1000`")},
+        Case {request: "GET /api/v2/users/1000", expect: Some("got `GET /api/v2/users/1000`")},
         Case {request: "GET /api/subtasks/2", expect: Some("got `GET /api/subtasks/2`")},
         Case {request: "POST /api/subtasks/42/314", expect: Some("got `POST /api/subtasks/42/314`")},
         Case {request: "POST /api/subtasks//314", expect: None},

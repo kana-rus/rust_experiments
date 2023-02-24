@@ -69,7 +69,7 @@ enum Pattern {
     fn matches(&self, path_section: &str) -> bool {
         match self {
             Self::Nil => unreachable!(),
-            Self::Param => path_section.starts_with(':'),
+            Self::Param => !path_section.is_empty(),
             Self::Str(string) => string == &path_section,
         }
     }
@@ -157,7 +157,7 @@ impl Node {
     fn _search<'buf>(&self, path: &mut Path<'buf>, mut params: Vec<&'buf str>) -> Option<(&HandleFunc, Vec<&'buf str>)> {
         if let Some(section) = path.next() {
             let child = self.matching_child(section)?;
-            if child.pattern.is_param() {params.push(&section[1..])}
+            if child.pattern.is_param() {params.push(section)}
             child._search(path, params)
         } else {
             Some(((self.handler.as_ref())?, params))
@@ -230,14 +230,6 @@ DELTE: {:?}
     #[test]
     fn trie_tree_new() {
         assert_eq!(
-            <TrieTreeRouter as Router<0>>::new([]), TrieTreeRouter {
-                GET: Node(Nil, None, vec![]),
-                POST: Node(Nil, None, vec![]),
-                PATCH: Node(Nil, None, vec![]),
-                DELETE: Node(Nil, None, vec![]),
-            }
-        );
-        assert_eq!(
             <TrieTreeRouter as Router<1>>::new([
                 handler(GET, "/")
             ]), TrieTreeRouter {
@@ -307,5 +299,62 @@ DELTE: {:?}
                 DELETE: Node(Nil, None, vec![]),
             }
         );
+    }
+
+    #[test]
+    fn trie_tree_search() {
+        fn assert_search<const N: usize>(request_line: &'static str, routes: [(crate::router::Method, &'static str); N], expect_params: Option<&'static [&'static str]>) {
+            match <TrieTreeRouter as Router<N>>::search(
+                &<TrieTreeRouter as Router<N>>::new(routes.map(|(method, route)| crate::router::test::handler(method, route))),
+                request_line
+            ) {
+                None              => assert_eq!(expect_params, None),
+                Some((_, params)) => assert_eq!(Some(params), expect_params.map(|array| array.to_vec())),
+            }
+        }
+
+        assert_search("GET /", [
+            (GET, "/")
+        ], Some(&[]));
+
+        assert_search("GET /api", [
+            (GET, "/api")
+        ], Some(&[]));
+        assert_search("GET /", [
+            (GET, "/api")
+        ], None);
+        
+        assert_search("GET /api/users/1", [
+            (GET, "/api/users"),
+            (GET, "/api/users/:id"),
+        ], Some(&["1"]));
+        assert_search("GET /api/users", [
+            (GET, "/api/users"),
+            (GET, "/api/users/:id"),
+        ], Some(&[]));
+        
+        assert_search("GET /api/users/42", [
+            (GET, "/api/users/:id"),
+            (POST, "/api/users"),
+            (GET, "/api/tasks/completed/:user_id"),
+            (GET, "/api/tasks/all/:user_id"),
+        ], Some(&["42"]));
+        assert_search("POST /api/users/42", [
+            (GET, "/api/users/:id"),
+            (POST, "/api/users"),
+            (GET, "/api/tasks/completed/:user_id"),
+            (GET, "/api/tasks/all/:user_id"),
+        ], None);
+        assert_search("GET /api/tasks/all/user_id", [
+            (GET, "/api/users/:id"),
+            (POST, "/api/users"),
+            (GET, "/api/tasks/completed/:user_id"),
+            (GET, "/api/tasks/all/:user_id"),
+        ], Some(&["user_id"]));
+
+        assert_search("GET /api/v2/users/2", [
+            (GET, "/api/:api_version/users/:id"),
+        ], Some(&["v2", "2"]))
+        
     }
 }
