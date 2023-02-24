@@ -108,14 +108,13 @@ mod test {
         request: &'static str,
         expect:  Option<&'static str>,
     }
-    fn assert_response<F: Future<Output = Response>>( response: F, expect: &Option<&'static str>) {
+    fn assert_response<F: Future<Output = Response>>(response: F, expect: &Option<&'static str>, request: &str) {
         match async_std::task::block_on(response) {
             Response::Ok(body) => {
-                assert!(expect.is_some());
-                assert_eq!(&body.as_str(), expect.as_ref().unwrap());
+                assert_eq!(&Some(body.as_str()), expect, "in {request}");
             },
             Response::Err(_) => {
-                assert!(expect.is_none());
+                assert!(expect.is_none(), "in {request}");
             },
         }
     }
@@ -138,8 +137,8 @@ mod test {
         let router = TrieTreeRouter::new(TEST_ROUTES());
         for Case { request, expect } in TEST_CASES {
             match <TrieTreeRouter as Router<TEST_ROUTES_SIZE>>::search(&router, &request) {
-                None                   => assert!(expect.is_none()),
-                Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect),
+                None                   => assert!(expect.is_none(), "in {request}"),
+                Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect, &request),
             }
         }
     }
@@ -149,8 +148,8 @@ mod test {
         let router = RegexSetRouter2::new(TEST_ROUTES());
         for Case { request, expect } in TEST_CASES {
             match router.search(&request) {
-                None                   => assert!(expect.is_none()),
-                Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect),
+                None                   => assert!(expect.is_none(), "in {request}"),
+                Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect, &request),
             }
         }
     }
