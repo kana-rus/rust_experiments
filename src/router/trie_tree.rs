@@ -17,28 +17,27 @@ pub struct TrieTreeRouter {
         }
     }
 }
-
 struct Node {
     pattern: Pattern,
     handler: Option<HandleFunc>,
-    chidlren: Vec<Node>,
+    children: Vec<Node>,
 } impl Node {
     fn root() -> Self {
         Self {
             pattern:  Pattern::Nil,
             handler:  None,
-            chidlren: Vec::new(),
+            children: Vec::new(),
         }
     }
     fn new(section: &'static str) -> Self {
         Self {
             pattern:  Pattern::new(section),
             handler:  None,
-            chidlren: Vec::new(),
+            children: Vec::new(),
         }
     }
     fn matching_child<'path>(&self, section: &'path str) -> Option<&Self> {
-        for child in &self.chidlren {
+        for child in &self.children {
             if child.pattern.matches(section) {
                 return Some(child)
             }
@@ -46,7 +45,7 @@ struct Node {
         None
     }
     fn matching_child_mut<'path>(&mut self, section: &'path str) -> Option<&mut Self> {
-        for child in &mut self.chidlren {
+        for child in &mut self.children {
             if child.pattern.matches(section) {
                 return Some(child)
             }
@@ -54,7 +53,7 @@ struct Node {
         None
     }
 }
-
+#[derive(PartialEq, Debug)]
 enum Pattern {
     Nil,
     Param,
@@ -87,12 +86,14 @@ struct Path<'buf>(
     Split<'buf, char>
 ); impl<'buf> Path<'buf> {
     fn new(path_str: &'buf str) -> Self {
-        Self(
-            path_str
+        match path_str {
+            "/" => {let mut s = "".split('/'); s.next(); Self(s)}//empty iterator
+            _ => Self(path_str
                 .trim_start_matches('/')
                 .trim_end_matches('/')
                 .split('/')
-        )
+            )
+        }
     }
 } impl<'buf> Iterator for Path<'buf> {
     type Item = &'buf str;
@@ -147,7 +148,7 @@ impl Node {
             } else {
                 let  mut child = Node::new(section);
                 child._register(route, handler);
-                self.chidlren.push(child)
+                self.children.push(child)
             }
         } else {
             self.handler = Some(handler)
@@ -161,5 +162,150 @@ impl Node {
         } else {
             Some(((self.handler.as_ref())?, params))
         }
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use std::fmt::Debug;
+    use crate::router::{test::handler, Router, Method::*, TrieTreeRouter, trie_tree::Pattern::*, HandleFunc};
+
+    #[allow(non_snake_case)]
+    fn Handler() -> Option<HandleFunc> {
+        Some(Box::new(|req| Box::pin(crate::router::test::handle_func(req))))
+    }
+    #[allow(non_snake_case)]
+    fn Node(pattern: super::Pattern, handler: Option<HandleFunc>, children: Vec<super::Node>) -> super::Node {
+        super::Node { pattern, handler, children }
+    }
+
+    const _: () = {
+        impl PartialEq for TrieTreeRouter {
+            fn eq(&self, other: &Self) -> bool {
+                self.GET == other.GET &&
+                self.POST == other.POST &&
+                self.PATCH == other.PATCH &&
+                self.DELETE == other.DELETE
+            }
+        }
+        impl Debug for TrieTreeRouter {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "
+GET:   {:?}
+POST:  {:?}
+PATCH: {:?}
+DELTE: {:?}
+",
+                    self.GET,
+                    self.POST,
+                    self.PATCH,
+                    self.DELETE,
+                )
+            }
+        }
+
+        /* in this test, I'll use only one handle func */
+        impl PartialEq for super::Node {
+            fn eq(&self, other: &Self) -> bool {
+                self.pattern == other.pattern
+                && self.children == other.children
+                && match &self.handler {
+                    Some(_) => other.handler.is_some(),
+                    None    => other.handler.is_none(),
+                }
+            }
+        }
+        impl Debug for super::Node {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "#{{ pattern: {:?}, handler: {}, children: {:?} }}",
+                    self.pattern,
+                    if self.handler.is_some() {"Some"} else {"None"},
+                    self.children,
+                )
+            }
+        }
+    };
+
+    #[test]
+    fn trie_tree_new() {
+        assert_eq!(
+            <TrieTreeRouter as Router<0>>::new([]), TrieTreeRouter {
+                GET: Node(Nil, None, vec![]),
+                POST: Node(Nil, None, vec![]),
+                PATCH: Node(Nil, None, vec![]),
+                DELETE: Node(Nil, None, vec![]),
+            }
+        );
+        assert_eq!(
+            <TrieTreeRouter as Router<1>>::new([
+                handler(GET, "/")
+            ]), TrieTreeRouter {
+                GET: Node(Nil, Handler(), vec![]),
+                POST: Node(Nil, None, vec![]),
+                PATCH: Node(Nil, None, vec![]),
+                DELETE: Node(Nil, None, vec![]),
+            }
+        );
+        assert_eq!(
+            <TrieTreeRouter as Router<1>>::new([
+                handler(GET, "/api")
+            ]), TrieTreeRouter {
+                GET: Node(Nil, None, vec![
+                    Node(Str("api"), Handler(), vec![])
+                ]),
+                POST: Node(Nil, None, vec![]),
+                PATCH: Node(Nil, None, vec![]),
+                DELETE: Node(Nil, None, vec![]),
+            }
+        );
+        assert_eq!(
+            <TrieTreeRouter as Router<2>>::new([
+                handler(GET, "/api/users"),
+                handler(GET, "/api/users/:id"),
+            ]), TrieTreeRouter {
+                GET: Node(Nil, None, vec![
+                    Node(Str("api"), None, vec![
+                        Node(Str("users"), Handler(), vec![
+                            Node(Param, Handler(), vec![])
+                        ])
+                    ])
+                ]),
+                POST: Node(Nil, None, vec![]),
+                PATCH: Node(Nil, None, vec![]),
+                DELETE: Node(Nil, None, vec![]),
+            }
+        );
+        assert_eq!(
+            <TrieTreeRouter as Router<4>>::new([
+                handler(GET, "/api/users/:id"),
+                handler(POST, "/api/users"),
+                handler(GET, "/api/tasks/completed/:user_id"),
+                handler(GET, "/api/tasks/all/:user_id"),
+            ]), TrieTreeRouter {
+                GET: Node(Nil, None, vec![
+                    Node(Str("api"), None, vec![
+                        Node(Str("users"), None, vec![
+                            Node(Param, Handler(), vec![])
+                        ]),
+                        Node(Str("tasks"), None, vec![
+                            Node(Str("completed"), None, vec![
+                                Node(Param, Handler(), vec![])
+                            ]),
+                            Node(Str("all"), None, vec![
+                                Node(Param, Handler(), vec![])
+                            ])
+                        ])
+                    ])
+                ]),
+                POST: Node(Nil, None, vec![
+                    Node(Str("api"), None, vec![
+                        Node(Str("users"), Handler(), vec![])
+                    ])
+                ]),
+                PATCH: Node(Nil, None, vec![]),
+                DELETE: Node(Nil, None, vec![]),
+            }
+        );
     }
 }

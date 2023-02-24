@@ -62,7 +62,7 @@ mod test {
     use super::{TrieTreeRouter, RegexSetRouter2, Router, Handler, Request, Response};
 
     const TEST_ROUTES_SIZE: usize = 16;
-    async fn handle_func(req: Request) -> Response {
+    pub(super) async fn handle_func(req: Request) -> Response {
         Response::Ok(format!("got `{} {}`",
             match req.method {
                 GET => "GET",
@@ -73,7 +73,7 @@ mod test {
             req.path
         ))
     }
-    fn handler(method: Method, route: &'static str) -> Handler {
+    pub(super) fn handler(method: Method, route: &'static str) -> Handler {
         Handler {
             method,
             route,
