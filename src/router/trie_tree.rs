@@ -2,12 +2,12 @@ use std::str::Split;
 use super::{Method, Handler, Router, HandleFunc};
 
 
-pub struct TrieTreeRouter<'router> {
-    GET: Node<'router>,
-    POST: Node<'router>,
-    PATCH: Node<'router>,
-    DELETE: Node<'router>,
-} impl<'router> TrieTreeRouter<'router> {
+pub struct TrieTreeRouter {
+    GET: Node,
+    POST: Node,
+    PATCH: Node,
+    DELETE: Node,
+} impl TrieTreeRouter {
     fn new() -> Self {
         Self {
             GET: Node::root(),
@@ -18,11 +18,11 @@ pub struct TrieTreeRouter<'router> {
     }
 }
 
-struct Node<'router> {
+struct Node {
     pattern: Pattern,
-    handler: Option<HandleFunc<'router>>,
-    chidlren: Vec<Node<'router>>,
-} impl<'router> Node<'router> {
+    handler: Option<HandleFunc>,
+    chidlren: Vec<Node>,
+} impl Node {
     fn root() -> Self {
         Self {
             pattern:  Pattern::Nil,
@@ -103,8 +103,8 @@ struct Path<'buf>(
 
 
 const _: () = {
-    impl<'router, const N: usize> Router<'router, N> for TrieTreeRouter<'router> {
-        fn new(handlers: [Handler<'router>; N]) -> Self {
+    impl<const N: usize> Router<N> for TrieTreeRouter {
+        fn new(handlers: [Handler; N]) -> Self {
             let mut this = Self::new();
             for Handler { method, route, proc } in handlers {
                 match method {
@@ -116,7 +116,7 @@ const _: () = {
             }
             this   
         }
-        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&'router HandleFunc, Vec<&'buf str>)> {
+        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
             let (method, path) = request_line.split_once(' ').unwrap();
             match method {
                 "GET" => self.GET.search(path),
@@ -129,18 +129,18 @@ const _: () = {
     }
 };
 
-impl<'router> Node<'router> {
-    fn register(&mut self, route: &'static str, handler: HandleFunc<'router>) {
+impl Node {
+    fn register(&mut self, route: &'static str, handler: HandleFunc) {
         let mut route: Path<'static> = Path::new(route);
         self._register(&mut route, handler)
     }
-    fn search<'buf>(&'router self, path: &'buf str) -> Option<(&'router HandleFunc<'router>, Vec<&'buf str>)> {
+    fn search<'buf>(&self, path: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
         let mut path = Path::new(path);
         let params = Vec::new();
         self._search(&mut path, params)
     }
     
-    fn _register(&mut self, route: &mut Path<'static>, handler: HandleFunc<'router>) {
+    fn _register(&mut self, route: &mut Path<'static>, handler: HandleFunc) {
         if let Some(section) = route.next() {
             if let Some(child) = self.matching_child_mut(section) {
                 child._register(route, handler)
@@ -153,7 +153,7 @@ impl<'router> Node<'router> {
             self.handler = Some(handler)
         }
     }
-    fn _search<'buf>(&'router self, path: &mut Path<'buf>, mut params: Vec<&'buf str>) -> Option<(&'router HandleFunc, Vec<&'buf str>)> {
+    fn _search<'buf>(&self, path: &mut Path<'buf>, mut params: Vec<&'buf str>) -> Option<(&HandleFunc, Vec<&'buf str>)> {
         if let Some(section) = path.next() {
             let child = self.matching_child(section)?;
             if child.pattern.is_param() {params.push(&section[1..])}

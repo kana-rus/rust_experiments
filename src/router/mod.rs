@@ -4,10 +4,10 @@ use std::{pin::Pin, future::Future};
 mod trie_tree; pub use trie_tree::TrieTreeRouter;
 mod regex_set; pub use regex_set::{/*RegexSetRouter1, */ RegexSetRouter2};
 
-pub trait Router<'router, const N: usize> {
-    fn new(handlers: [Handler<'router>; N]) -> Self;
+pub trait Router<const N: usize> {
+    fn new(handlers: [Handler; N]) -> Self;
     /// `request_line` は末尾の ` HTTP/1.1` を除いた `{method} {path}` の形を想定
-    fn search<'buf>(&'router self, request_line: &'buf str) -> Option<(&'router HandleFunc, Vec<&'buf str>)>;
+    fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)>;
 }
 
 pub enum Method {
@@ -17,16 +17,27 @@ pub enum Method {
     DELETE,
 }
 
-pub struct Handler<'buf> {
+pub struct Handler {
     pub method: Method,
     pub route: &'static str,
-    pub proc: HandleFunc<'buf>,
+    pub proc: HandleFunc,
 }
 
 #[allow(unused)]
-pub struct Request<'buf> {
+pub struct Request {
     method: Method,
-    path:   &'buf str,
+    path:   &'static str,
+} impl Request {
+    #[allow(unused)] /// just for test
+    fn from(request_line: &'static str) -> Self {
+        match request_line.split_once(' ').unwrap() {
+            ("GET", path) => Self { method: Method::GET, path },
+            ("POST", path) => Self { method: Method::POST, path },
+            ("PATCH", path) => Self { method: Method::PATCH, path },
+            ("DELETE", path) => Self { method: Method::DELETE, path },
+            _ => unreachable!()
+        }
+    }
 }
 
 pub enum Response {
@@ -34,11 +45,118 @@ pub enum Response {
     Err(String),
 }
 
-pub type HandleFunc<'buf> = Box<dyn
-    Fn(Request<'buf>) -> Pin<
+pub type HandleFunc = Box<dyn
+    Fn(Request) -> Pin<
         Box<dyn
             Future<Output=Response>
             + Send
         >
     > + Send + Sync
 >;
+
+
+#[cfg(test)]
+mod test {
+    use std::future::Future;
+    use super::{Method, Method::*};
+    use super::{TrieTreeRouter, RegexSetRouter2, Router, Handler, Request, Response};
+
+    const TEST_ROUTES_SIZE: usize = 16;
+    async fn handle_func(req: Request) -> Response {
+        Response::Ok(format!("got `{} {}`",
+            match req.method {
+                GET => "GET",
+                POST => "POST",
+                PATCH => "PATCH",
+                DELETE => "DELETE",
+            },
+            req.path
+        ))
+    }
+    fn handler(method: Method, route: &'static str) -> Handler {
+        Handler {
+            method,
+            route,
+            proc: Box::new(move |req| Box::pin(
+                handle_func(req)
+            )),
+        }
+    }
+    #[allow(non_snake_case)]
+    fn TEST_ROUTES() -> [Handler; TEST_ROUTES_SIZE] {
+        [
+            handler(GET,    "/"),
+            handler(GET,    "/hc"),
+            handler(GET,    "/api/users/:id"),
+            handler(POST,   "/api/users"),
+            handler(PATCH,  "/api/users/:id"),
+            handler(DELETE, "/api/users/:id"),
+            handler(GET,    "/api/tasks/:user_id"),
+            handler(POST,   "/api/tasks"),
+            handler(GET,    "/api/v2/users/:id"),
+            handler(POST,   "/api/v2/users"),
+            handler(GET,    "/api/subtasks/:user_id"),
+            handler(POST,   "/api/subtasks/:user_id/:id"),
+            handler(DELETE, "/api/subtasks/:users/:id"),
+            handler(PATCH,  "/api/users/subtasks/:user_id/:id"),
+            handler(GET,    "/api/v2/tasks/:id"),
+            handler(POST,   "/api/v2/tasks"),
+        ]
+    }
+
+    struct Case {
+        request: &'static str,
+        expect:  Option<Result>,
+    }
+    struct Result {
+        ok:   bool,
+        body: &'static str,
+    } impl Result {
+        fn is<F: Future<Output = Response>>(&self, response: F) -> bool {
+            match async_std::task::block_on(response) {
+                Response::Ok(body) => self.ok && self.body == body.as_str(),
+                Response::Err(body) => !self.ok && self.body == body.as_str(),
+            }
+        }
+    }
+    const TEST_CASES: &'static [Case] = &[
+        Case {request: "GET /", expect: Some(Result { ok: true, body: "got `GET /`" })},
+
+    ];
+
+    #[test]
+    fn test_trie_tree_router() {
+        let router = TrieTreeRouter::new([]);
+        for Case { request, expect } in TEST_CASES {
+            match <TrieTreeRouter as Router<TEST_ROUTES_SIZE>>::search(&router, &request) {
+                None => {
+                    assert!(expect.is_none());
+                },
+                Some((handle_func, _)) => {
+                    assert!(expect.is_some());
+                    assert!(expect.as_ref().unwrap().is(
+                        handle_func(Request::from(request))
+                    ));
+                },
+            }
+        }
+    }
+
+    #[test]
+    fn test_regex_set_router() {
+        let router = RegexSetRouter2::new(TEST_ROUTES());
+        for Case { request, expect } in TEST_CASES {
+            match router.search(&request) {
+                None => {
+                    assert!(expect.is_none());
+                },
+                Some((handle_func, _)) => {
+                    assert!(expect.is_some());
+                    assert!(expect.as_ref().unwrap().is(
+                        handle_func(Request::from(request))
+                    ));
+                },
+            }
+        }
+    }
+}

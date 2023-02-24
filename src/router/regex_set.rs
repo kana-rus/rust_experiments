@@ -11,9 +11,9 @@ use super::{Handler, Router, Method, HandleFunc};
 // struct Node<'router, const N: usize> {
 //     regex_set: RegexSet,
 //     routes:    [Option<Regex>; N],
-//     handlers:  [Option<Handler<'router>>; N],
+//     handlers:  [Option<Handler>; N],
 // } impl<'router, const N: usize> Node<'router, N> {
-//     fn new(regex_strs: Vec<String>, handlers_for_this_method: Vec<Handler<'router>>) -> Self {
+//     fn new(regex_strs: Vec<String>, handlers_for_this_method: Vec<Handler>) -> Self {
 //         let mut routes = vec![None; N];
 //         for (i, re_str) in regex_strs.iter().enumerate() {
 //             routes[i] = Some(Regex::new(re_str).unwrap())
@@ -33,7 +33,7 @@ use super::{Handler, Router, Method, HandleFunc};
 // }
 // const _: () = {
 //     impl<'router, const N: usize> Router<'router, N> for RegexSetRouter1<'router, N> {
-//         fn new(methods: [Method; N], routes: [&'static str; N], handlers: [Handler<'router>; N]) -> Self {
+//         fn new(methods: [Method; N], routes: [&'static str; N], handlers: [Handler; N]) -> Self {
 //             let this = Se;
 //         }
 //         fn search<'buf>(&'router self, request_line: &'buf str) -> Option<(&'router Handler, Vec<&'buf str>)> {
@@ -43,14 +43,14 @@ use super::{Handler, Router, Method, HandleFunc};
 // };
 // 
 
-pub struct RegexSetRouter2<'router, const N: usize> {
+pub struct RegexSetRouter2<const N: usize> {
     regex_set:    RegexSet,
     routes:       [Regex; N],
-    handle_funcs: [HandleFunc<'router>; N],
+    handle_funcs: [HandleFunc; N],
 }
 const _: () = {
-    impl<'router, const N: usize> Router<'router, N> for RegexSetRouter2<'router, N> {
-        fn new(handlers: [Handler<'router>; N]) -> Self {
+    impl<const N: usize> Router<N> for RegexSetRouter2<N> {
+        fn new(handlers: [Handler; N]) -> Self {
             let routes = {
                 let mut routes = Vec::with_capacity(N);
 
@@ -77,7 +77,7 @@ const _: () = {
             }
         }
 
-        fn search<'buf>(&'router self, request_line: &'buf str) -> Option<(&'router HandleFunc, Vec<&'buf str>)> {
+        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
             let matched = self.regex_set.matches(request_line)
                 .into_iter()
                 .last()?;
