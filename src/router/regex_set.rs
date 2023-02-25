@@ -54,7 +54,7 @@ const _: () = {
             let routes = {
                 let mut routes = Vec::with_capacity(N);
 
-                let param_pattern = Regex::new(":[a-zA-Z][_a-zA-Z0-9]*/").unwrap();
+                let param_pattern = Regex::new(":[a-zA-Z][_a-zA-Z0-9]*").unwrap();
                 for Handler { method, route, .. } in &handlers {
                     let method_name = match method {
                         Method::GET => "GET",
@@ -62,8 +62,8 @@ const _: () = {
                         Method::PATCH => "PATCH",
                         Method::DELETE => "DELETE",
                     };
-                    routes.push(format!("{method_name} {}",
-                        param_pattern.replace_all(route, "([_a-zA-Z0-9]+)/")
+                    routes.push(format!("{method_name} {}$",
+                        param_pattern.replace_all(route, "([_a-zA-Z0-9]+)")
                     ))
                 }
 
@@ -89,3 +89,28 @@ const _: () = {
         }
     }
 };
+
+
+#[cfg(test)]
+mod test {
+    use regex::RegexSet;
+
+    #[test]
+    fn how_regex_set_works() {
+        let r = RegexSet::new([
+            "GET /$",
+            "GET /api/users/([_a-zA-Z0-9]+)$",
+            "POST /api/users$",
+        ]).unwrap();
+
+        let assert_match = |request: &'static str, result: Option<usize>| {
+            assert_eq!(r.matches(request).into_iter().next(), result, "{request}")
+        };
+
+        assert_match("GET /", Some(0));
+        assert_match("GET /api", None);
+        assert_match("GET /api/users", None);
+        assert_match("GET /api/users/1", Some(1));
+        assert_match("POST /api/users", Some(2));
+    }
+}

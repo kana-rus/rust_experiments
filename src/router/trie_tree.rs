@@ -81,7 +81,6 @@ enum Pattern {
     }
 }
 
-
 struct Path<'buf>(
     Split<'buf, char>
 ); impl<'buf> Path<'buf> {

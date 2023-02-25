@@ -25,8 +25,8 @@ pub struct Handler {
 
 #[allow(unused)]
 pub struct Request {
-    method: Method,
-    path:   &'static str,
+    pub method: Method,
+    pub path:   &'static str,
 } impl Request {
     #[allow(unused)] /// just for test
     fn from(request_line: &'static str) -> Self {
@@ -83,7 +83,7 @@ mod test {
         }
     }
     #[allow(non_snake_case)]
-    fn TEST_ROUTES() -> [Handler; TEST_ROUTES_SIZE] {
+    pub fn TEST_ROUTES() -> [Handler; TEST_ROUTES_SIZE] {
         [
             handler(GET,    "/"),
             handler(GET,    "/hc"),
