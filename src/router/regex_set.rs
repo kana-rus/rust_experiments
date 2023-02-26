@@ -46,23 +46,28 @@ use super::{Handler, Router, Method, HandleFunc};
 pub struct RegexSetRouter2<const N: usize> {
     regex_set:    RegexSet,
     routes:       [Regex; N],
-    handle_funcs: [HandleFunc; N],
+    handle_funcs: [(HandleFunc, bool/* requires params */); N],
 }
 const _: () = {
     impl<const N: usize> Router<N> for RegexSetRouter2<N> {
         fn new(handlers: [Handler; N]) -> Self {
+            let handlers = handlers.map(|h| {
+                let reuiqres_params = (&h.route).contains(':');
+                (h, reuiqres_params)
+            });
+
             let routes = {
                 let mut routes = Vec::with_capacity(N);
 
                 let param_pattern = Regex::new(":[a-zA-Z][_a-zA-Z0-9]*").unwrap();
-                for Handler { method, route, .. } in &handlers {
+                for (Handler { method, route, .. }, _) in &handlers {
                     let method_name = match method {
                         Method::GET => "GET",
                         Method::POST => "POST",
                         Method::PATCH => "PATCH",
                         Method::DELETE => "DELETE",
                     };
-                    routes.push(format!("{method_name} {}$",
+                    routes.push(format!("^{method_name} {}$",
                         param_pattern.replace_all(route, "([_a-zA-Z0-9]+)")
                     ))
                 }
@@ -73,7 +78,7 @@ const _: () = {
             Self {
                 regex_set:    RegexSet::new(&routes).unwrap(),
                 routes:       TryInto::<[String; N]>::try_into(routes).unwrap().map(|s| Regex::new(&s).unwrap()),
-                handle_funcs: handlers.map(|h| h.proc),
+                handle_funcs: handlers.map(|(h, p)| (h.proc, p)),
             }
         }
 
@@ -81,11 +86,19 @@ const _: () = {
             let matched = self.regex_set.matches(request_line)
                 .into_iter()
                 .last()?;
-            Some((
-                &self.handle_funcs[matched],
-                self.routes[matched].captures(request_line).unwrap()
-                    .iter().map(|c| c.unwrap().as_str()).collect()
-            ))
+            let (handle_func, requires_params) = &self.handle_funcs[matched];
+            if *requires_params {
+                Some((
+                    handle_func,
+                    self.routes[matched].captures(request_line).unwrap()
+                        .iter().map(|c| c.unwrap().as_str()).collect()
+                ))
+            } else {
+                Some((
+                    handle_func,
+                    vec![]
+                ))
+            }
         }
     }
 };

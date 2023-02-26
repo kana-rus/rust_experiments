@@ -135,8 +135,9 @@ impl Node {
         self._register(&mut route, handler)
     }
     fn search<'buf>(&self, path: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
+        const PARAMS_CAPACITY: usize = 2;
         let mut path = Path::new(path);
-        let params = Vec::new();
+        let params = Vec::with_capacity(PARAMS_CAPACITY);
         self._search(&mut path, params)
     }
     
