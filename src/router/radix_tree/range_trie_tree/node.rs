@@ -1,5 +1,5 @@
-use crate::router::{HandleFunc, radix_tree::patterns::Pattern};
-use super::route::Route;
+use crate::router::HandleFunc;
+use super::{route::Route, pattern::Pattern};
 
 pub struct Node {
     pub pattern:     Pattern,
@@ -15,7 +15,20 @@ impl Node {
             children:    vec![],
         }
     }
-    pub fn register(&mut self, route: Route, handle_func: HandleFunc) {
-        
+    fn new(pattern: Pattern) -> Self {
+        Self {
+            pattern,
+            handle_func: None,
+            children:    vec![],
+        }
+    }
+    pub fn register(&mut self, route: &mut Route, handle_func: HandleFunc) {
+        if let Some(next) = route.next() {
+
+            todo!()
+            
+        } else {
+            self.handle_func = Some(handle_func)
+        }
     }
 }

@@ -21,12 +21,12 @@ impl RangeTrieTree {
         }
     }
     pub fn register(&mut self, method: Method, route_str: &'static str, handle_func: HandleFunc) {
-        let route = Route::new(route_str);
+        let mut route = Route::new(route_str);
         match method {
             Method::GET => &mut self.GET,
             Method::POST => &mut self.POST,
             Method::PATCH => &mut self.PATCH,
             Method::DELETE => &mut self.DELETE,
-        }.register(route, handle_func)
+        }.register(&mut route, handle_func)
     }
 }
