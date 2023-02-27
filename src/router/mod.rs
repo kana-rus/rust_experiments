@@ -2,6 +2,7 @@
 use std::{pin::Pin, future::Future};
 
 mod trie_tree; pub use trie_tree::TrieTreeRouter;
+mod trie_tree_with_string; pub use trie_tree_with_string::TrieTreeRouterWithString;
 mod radix_tree;
 mod regex_set; pub use regex_set::{/*RegexSetRouter1, */ RegexSetRouter2};
 
