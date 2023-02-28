@@ -1,6 +1,6 @@
-mod pattern;
+mod pattern; pub use pattern::Pattern;
 mod route; use route::Route;
-mod node; use node::Node;
+mod node; pub use node::Node;
 
 use crate::router::{Method, HandleFunc};
 

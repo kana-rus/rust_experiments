@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 pub enum Pattern {
-    Str(Section),
+    Section(Section),
     Param,
     Nil,
 }
@@ -16,13 +16,28 @@ impl Pattern {
         if section.starts_with(':') {
             Self::Param
         } else {
-            Self::Str(Section { route_str, range: section_range })
+            Self::Section(Section { route_str, range: section_range })
         }
     }
 
-    pub fn is_str(&self) -> bool {
+    pub fn matches(&self, another: &Self) -> bool {
         match self {
-            Self::Str(_) => true,
+            Self::Nil => unreachable!(),
+            Self::Param => true,
+            Self::Section(_) => self.get_str() == another.get_str()
+        }
+    }
+    pub fn matches_str(&self, section_str: &str) -> bool {
+        match self {
+            Self::Nil => unreachable!(),
+            Self::Param => true,
+            Self::Section(s) => s.read_str() == section_str
+        }
+    }
+
+    pub fn is_section(&self) -> bool {
+        match self {
+            Self::Section(_) => true,
             _ => false,
         }
     }
@@ -39,11 +54,35 @@ impl Pattern {
         }
     }
 
-    fn get_str(&self) -> Option<&str> {
+    fn get_section(&self) -> Option<&Section> {
         match self {
-            Self::Param | Self::Nil => None,
-            Self::Str(Section { route_str, range }) => Some(&route_str[range.clone()]),
+            Self::Nil | Self::Param => None,
+            Self::Section(section) => Some(section),
         }
+    }
+    fn get_section_mut(&mut self) -> Option<&mut Section> {
+        match self {
+            Self::Nil | Self::Param => None,
+            Self::Section(section) => Some(section),
+        }
+    }
+    fn get_str(&self) -> Option<&str> {
+        self.get_section().map(|s| s.read_str())
+    }
+
+    pub fn merge_sections(&mut self, child_pattern: Self) {
+        let Some(s) = self.get_section_mut() else {return};
+        let Some(ref c) = child_pattern.get_section() else {return};
+
+        if s.route_str == c.route_str
+        && s.range.end + 1 == c.range.start {
+            s.range.end = c.range.end
+        }
+    }
+}
+impl Section {
+    pub fn read_str(&self) -> &'static str {
+        &self.route_str[self.range.clone()]
     }
 }
 
@@ -55,6 +94,22 @@ const _: (/* Pattern impls */) = {
                 Self::Param => other.is_param(),
                 _ => self.get_str() == other.get_str()
             }
+        }
+    }
+    impl Clone for Pattern {
+        fn clone(&self) -> Self {
+            match self {
+                Self::Nil => unreachable!(),
+                Self::Param => Self::Param,
+                Self::Section(s) => Self::Section(s.clone()),
+            }
+        }
+    }
+};
+const _: (/* Section impls */) = {
+    impl Clone for Section {
+        fn clone(&self) -> Self {
+            Section { route_str: self.route_str, range: self.range.clone() }
         }
     }
 };

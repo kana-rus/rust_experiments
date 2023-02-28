@@ -23,12 +23,36 @@ impl Node {
         }
     }
     pub fn register(&mut self, route: &mut Route, handle_func: HandleFunc) {
-        if let Some(next) = route.next() {
-
-            todo!()
-            
+        if let Some(next_pattern) = route.next() {
+            if let Some(child) = self.child_matching_pattern_mut(&next_pattern) {
+                child.register(route, handle_func)
+            } else {
+                let mut child = Node::new(next_pattern);
+                child.register(route, handle_func);
+                self.children.push(child)
+            }
         } else {
             self.handle_func = Some(handle_func)
         }
     }
+    pub fn child_matching_pattern_mut(&mut self, pattern: &Pattern) -> Option<&mut Self> {
+        for child in &mut self.children {
+            if pattern.matches(&child.pattern) {
+                return Some(child)
+            }
+        }
+        None
+    }
+
+    // pub fn radixize(&mut self) {
+    //     match self.children.len() {
+    //         0 => (),
+    //         1 => {
+    //             
+    //         },
+    //         _ => {
+// 
+    //         },
+    //     }
+    // }
 }
