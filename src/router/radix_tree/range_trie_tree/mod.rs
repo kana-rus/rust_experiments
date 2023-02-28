@@ -1,4 +1,4 @@
-mod pattern; pub use pattern::Pattern;
+mod pattern; pub use pattern::{Pattern, Section};
 mod route; use route::Route;
 mod node; pub use node::Node;
 

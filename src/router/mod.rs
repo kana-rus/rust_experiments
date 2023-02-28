@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 use std::{pin::Pin, future::Future};
 
-mod trie_tree; pub use trie_tree::TrieTreeRouter;
-mod trie_tree_with_string; pub use trie_tree_with_string::TrieTreeRouterWithString;
-mod radix_tree;
-mod regex_set; pub use regex_set::{/*RegexSetRouter1, */ RegexSetRouter2};
+pub mod trie_tree; pub use trie_tree::TrieTreeRouter;
+pub mod trie_tree_with_string; pub use trie_tree_with_string::TrieTreeRouterWithString;
+pub mod radix_tree;
+pub mod regex_set; pub use regex_set::{/*RegexSetRouter1, */ RegexSetRouter2};
 
 pub trait Router<const N: usize> {
     fn new(handlers: [Handler; N]) -> Self;

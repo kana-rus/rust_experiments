@@ -10,7 +10,7 @@ pub struct RadixTreeRouter {
     PATCH: Node,
     DELETE: Node,
 }
-struct Node {
+pub(super) struct Node {
     patterns: Vec<Pattern>,
     handle_func:  Option<HandleFunc>,
     children: Vec<Node>,
@@ -38,7 +38,7 @@ impl RadixTreeRouter {
     }
 }
 impl Node {
-    fn from_trie(mut node: range_trie_tree::Node) -> Self {
+    pub(super) fn from_trie(mut node: range_trie_tree::Node) -> Self {
         let mut patterns = vec![node.pattern.clone()];
         (node, patterns) = Self::merge_single_child(node, patterns);
         Self {
