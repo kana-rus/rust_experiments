@@ -11,9 +11,9 @@ pub struct RadixTreeRouter {
     DELETE: Node,
 }
 pub(super) struct Node {
-    patterns: Vec<Pattern>,
+    patterns:     Vec<Pattern>,
     handle_func:  Option<HandleFunc>,
-    children: Vec<Node>,
+    children:     Vec<Node>,
 }
 enum Pattern {
     Str(&'static str),
@@ -58,7 +58,8 @@ impl Node {
     ) {
         let this_pattern = patterns.last_mut().unwrap();
 
-        if node.children.len() == 1 {
+        if node.children.len() == 1
+        && node.handle_func.is_none() {
             let child = node.children.pop().unwrap();
             let child_pattern = child.pattern.clone();
 
@@ -71,6 +72,7 @@ impl Node {
             }
 
             node.children = child.children;
+            node.handle_func = child.handle_func;
             Self::merge_single_child(node, patterns)
         } else {
             (node, patterns)

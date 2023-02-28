@@ -31,7 +31,7 @@ impl Ranges {
                     let len = section.len();
                     queue.push_front(Range {
                         start: read_pos,
-                        end:   read_pos + len,
+                        end:   read_pos + len + 1/* '/' */,
                     });
                     read_pos += len
                 }

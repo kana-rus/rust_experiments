@@ -75,7 +75,7 @@ impl Pattern {
         let Some(ref c) = child_pattern.get_section() else {return};
 
         if s.route_str == c.route_str
-        && s.range.end + 1 == c.range.start {
+        && s.range.end == c.range.start {
             s.range.end = c.range.end
         }
     }
@@ -99,7 +99,7 @@ const _: (/* Pattern impls */) = {
     impl Clone for Pattern {
         fn clone(&self) -> Self {
             match self {
-                Self::Nil => unreachable!(),
+                Self::Nil => Self::Nil,
                 Self::Param => Self::Param,
                 Self::Section(s) => Self::Section(s.clone()),
             }

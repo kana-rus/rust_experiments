@@ -18,7 +18,7 @@ const _: () = {
     impl Debug for RadixNode {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             write!(f, "
-#{{patterns: {:?}, handle_func: {}, children: {:?}}}",
+#{{ patterns: {:?}, handle_func: {}, children: {:#?} }}",
                 self.patterns,
                 if self.handle_func.is_some() {"Some"} else {"None"},
                 self.children,
@@ -69,15 +69,18 @@ const _: () = {
 
 const ROUTE_1: &'static str = "/api/v2/users";
 const ROUTE_2: &'static str = "/api/tasks/completed";
+const ROUTE_3: &'static str = "/api/users/:id";
+const ROUTE_4: &'static str = "/api/v2/users/:id";
 
 fn Trie(
     pattern:  TriePattern,
+    handle_func: Option<HandleFunc>,
     children: Vec<TrieNode>,
 ) -> TrieNode {
     TrieNode {
         pattern,
+        handle_func,
         children,
-        handle_func: None,
     }
 }
 fn S1(range: Range<usize>) -> TriePattern {
@@ -90,35 +93,64 @@ fn S2(range: Range<usize>) -> TriePattern {
         TrieSection { route_str: ROUTE_2, range }
     )
 }
+fn S3(range: Range<usize>) -> TriePattern {
+    TriePattern::Section(
+        TrieSection { route_str: ROUTE_3, range }
+    )
+}
+fn S4(range: Range<usize>) -> TriePattern {
+    TriePattern::Section(
+        TrieSection { route_str: ROUTE_4, range }
+    )
+}
 fn H() -> Option<HandleFunc> {
     Some(Box::new(|_| Box::pin(async {Response::Ok(format!(""))})))
 }
 
-fn Radix(patterns: Vec<RadixPattern>, children: Vec<RadixNode>) -> RadixNode {
+fn Radix(patterns: Vec<RadixPattern>, handle_func: Option<HandleFunc>, children: Vec<RadixNode>) -> RadixNode {
     RadixNode {
         patterns,
+        handle_func,
         children,
-        handle_func: None,
     }
 }
 
 #[test]
 fn radix_from_trie() {
-    let trie = Trie(TriePattern::Nil, vec![
-        Trie(S1(1..4), vec![
-            Trie(S1(5..7), vec![
-                Trie(S1(8..13), vec![])
+    let trie = Trie(TriePattern::Nil, None, vec![
+        Trie(S1(0..4), None, vec![
+            Trie(S1(4..7), None, vec![
+                Trie(S1(7..13), None, vec![])
             ]),
-            Trie(S2(5..10), vec![
-                Trie(S2(11..20), vec![])
+            Trie(S2(4..10), None, vec![
+                Trie(S2(10..20), None, vec![])
             ])
         ]),
     ]);
-
-    let radix = Radix(vec![RadixPattern::Str("/api")], vec![
-        Radix(vec![RadixPattern::Str("/v2/users")], vec![]),
-        Radix(vec![RadixPattern::Str("/tasks/completed")], vec![])
+    let radix = Radix(vec![RadixPattern::Str("/api")], None, vec![
+        Radix(vec![RadixPattern::Str("/v2/users")], None, vec![]),
+        Radix(vec![RadixPattern::Str("/tasks/completed")], None, vec![])
     ]);
+    assert_eq!(RadixNode::from_trie(trie), radix);
 
-    assert_eq!(RadixNode::from_trie(trie), radix)
+
+    let trie = Trie(TriePattern::Nil, None, vec![
+        Trie(S1(0..4), None, vec![
+            Trie(S1(4..7), None, vec![
+                Trie(S1(7..13), H(), vec![
+                    Trie(TriePattern::Param, H(), vec![])
+                ])
+            ]),
+            Trie(S3(4..10), None, vec![
+                Trie(TriePattern::Param, H(), vec![])
+            ])
+        ])
+    ]);
+    let radix = Radix(vec![RadixPattern::Str("/api")], None, vec![
+        Radix(vec![RadixPattern::Str("/v2/users")], H(), vec![
+            Radix(vec![RadixPattern::Param], H(), vec![])
+        ]),
+        Radix(vec![RadixPattern::Str("/users"), RadixPattern::Param], H(), vec![])
+    ]);
+    assert_eq!(RadixNode::from_trie(trie), radix);
 }
