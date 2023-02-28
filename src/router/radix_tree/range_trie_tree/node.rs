@@ -43,16 +43,4 @@ impl Node {
         }
         None
     }
-
-    // pub fn radixize(&mut self) {
-    //     match self.children.len() {
-    //         0 => (),
-    //         1 => {
-    //             
-    //         },
-    //         _ => {
-// 
-    //         },
-    //     }
-    // }
 }

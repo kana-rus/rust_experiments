@@ -16,22 +16,6 @@ impl Route {
             section_ranges: Ranges::new(route_str)
         }
     }
-    // fn overlaps_with(&self, another: &Self) -> bool {
-    //     let this = self.clone().collect::<Vec<_>>();
-    //     let another = another.clone().collect::<Vec<_>>();
-// 
-    //     let n_sections = this.len();
-    //     if another.len() != n_sections {return false}
-    //     for i in 0..n_sections {
-    //         if this[i].is_str()
-    //         && another[i].is_str()
-    //         && this[i] != another[i] {
-    //             return false
-    //         }
-    //     }
-// 
-    //     true
-    // }
 }
 impl Ranges {
     fn new(route_str: &'static str) -> Self {
@@ -46,10 +30,10 @@ impl Ranges {
                 for section in split {
                     let len = section.len();
                     queue.push_front(Range {
-                        start: read_pos + 1/* '/' */,
-                        end:   read_pos + len/* section */,
+                        start: read_pos,
+                        end:   read_pos + len,
                     });
-                    read_pos += 1/* '/' */ + len/* section */
+                    read_pos += len
                 }
                 queue.into_iter()
             },

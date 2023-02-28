@@ -18,6 +18,7 @@ pub(super) struct Node {
 enum Pattern {
     Str(&'static str),
     Param,
+    Nil,
 }
 
 impl RadixTreeRouter {
@@ -63,6 +64,8 @@ impl Node {
 
             if this_pattern.is_section() && child.pattern.is_section() {
                 this_pattern.merge_sections(child_pattern)
+            } else if this_pattern.is_nil() {
+                *this_pattern = child_pattern
             } else {
                 patterns.push(child_pattern)
             }
@@ -79,7 +82,7 @@ const _: (/* Pattern impls */) = {
     impl From<range_trie_tree::Pattern> for Pattern {
         fn from(pattern: range_trie_tree::Pattern) -> Self {
             match pattern {
-                range_trie_tree::Pattern::Nil => unreachable!(),
+                range_trie_tree::Pattern::Nil => Self::Nil,
                 range_trie_tree::Pattern::Param => Self::Param,
                 range_trie_tree::Pattern::Section(section) => Self::Str(section.read_str()),
             }
