@@ -25,16 +25,6 @@ const _: () = {
             )
         }
     }
-
-    impl PartialEq for RadixPattern {
-        fn eq(&self, other: &Self) -> bool {
-            match self {
-                Self::Nil => other.is_nil(),
-                Self::Param => other.is_param(),
-                Self::Str(s) => Some(s) == other.read_str()
-            }
-        }
-    }
     impl Debug for RadixPattern {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
            match self {
@@ -44,33 +34,11 @@ const _: () = {
             }
         }
     }
-
-    impl RadixPattern {
-        fn is_nil(&self) -> bool {
-            match self {
-                Self::Nil => true,
-                _ => false,
-            }
-        }
-        fn is_param(&self) -> bool {
-            match self {
-                Self::Param => true,
-                _ => false,
-            }
-        }
-        fn read_str(&self) -> Option<&&'static str> {
-            match self {
-                Self::Str(s) => Some(s),
-                _ => None,
-            }
-        }
-    }
 };
 
 const ROUTE_1: &'static str = "/api/v2/users";
 const ROUTE_2: &'static str = "/api/tasks/completed";
 const ROUTE_3: &'static str = "/api/users/:id";
-const ROUTE_4: &'static str = "/api/v2/users/:id";
 
 fn Trie(
     pattern:  TriePattern,
@@ -96,11 +64,6 @@ fn S2(range: Range<usize>) -> TriePattern {
 fn S3(range: Range<usize>) -> TriePattern {
     TriePattern::Section(
         TrieSection { route_str: ROUTE_3, range }
-    )
-}
-fn S4(range: Range<usize>) -> TriePattern {
-    TriePattern::Section(
-        TrieSection { route_str: ROUTE_4, range }
     )
 }
 fn H() -> Option<HandleFunc> {

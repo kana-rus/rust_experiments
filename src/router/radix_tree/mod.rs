@@ -1,10 +1,98 @@
+pub struct RadixTreeRouter {
+    GET: RadixNode,
+    POST: RadixNode,
+    PATCH: RadixNode,
+    DELETE: RadixNode,
+} impl RadixTreeRouter {
+    pub fn from_radix_tree(tree: RadixTree) -> Self {
+        Self {
+            GET: RadixNode::from_node(tree.GET),
+            POST: RadixNode::from_node(tree.POST),
+            PATCH: RadixNode::from_node(tree.PATCH),
+            DELETE: RadixNode::from_node(tree.DELETE),
+        }
+    }
+}
+struct RadixNode {
+    patterns: &'static [Pattern],
+    handle_func: Option<HandleFunc>,
+    children: Vec<RadixNode>,
+} impl RadixNode {
+    fn from_node(node: Node) -> Self {
+        Self {
+            patterns:    Box::leak(node.patterns.into_boxed_slice()),
+            handle_func: node.handle_func,
+            children:    node.children.into_iter().map(|n| RadixNode::from_node(n)).collect(),
+        }
+    }
+}
+
+const _: () = {
+    impl<const N: usize> Router<N> for RadixTreeRouter {
+        fn new(handlers: [Handler; N]) -> Self {
+            let tree = RadixTree::new(handlers);
+            Self::from_radix_tree(tree)
+        }
+        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
+            let (method, path) = request_line.split_once(' ').unwrap();
+            match method {
+                "GET" => self.GET,
+                "POST" => self.POST,
+                "PATCH" => self.PATCH,
+                "DELETE" => self.DELETE,
+                _ => return None
+            }.search(path, vec![])
+        }
+    }
+
+    impl<'buf> RadixNode {
+        fn search(&self,
+            mut path: &'buf str,
+            params:   Vec<&'buf str>,
+        ) -> Option<(&HandleFunc, Vec<&'buf str>)> {
+            if path.is_empty() {return Some((&self.handle_func?, params))}
+
+                for pattern in self.patterns {
+                    if path.is_empty() {return None}
+                    match pattern {
+                        Pattern::Nil => unreachable!(),
+                        Pattern::Str(s) => path = path.strip_prefix(s)?,
+                        Pattern::Param => {
+                            match path[1..].find('/') {
+                                Some(len) => {
+                                    params.push(&path[1 .. 1+len]);
+                                    path = &path[1+len..]
+                                },
+                                None => {
+                                    params.push(&path[1..]);
+                                    path = ""
+                                },
+                            }
+                        },
+                    }
+                }
+
+                if path.is_empty() {
+                    Some((&self))
+                }
+        }
+
+        fn matching_chiild(&self, current_path: &str) -> Option<&Self> {
+            
+        }
+    }
+};
+
+
+
+
 mod test;
 mod range_trie_tree;
 
-use super::{HandleFunc, Handler};
+use super::{HandleFunc, Handler, Router};
 use self::range_trie_tree::RangeTrieTree;
 
-pub struct RadixTreeRouter {
+pub struct RadixTree {
     GET: Node,
     POST: Node,
     PATCH: Node,
@@ -15,13 +103,14 @@ pub(super) struct Node {
     handle_func:  Option<HandleFunc>,
     children:     Vec<Node>,
 }
+#[derive(PartialEq, Eq)]
 enum Pattern {
     Str(&'static str),
     Param,
     Nil,
 }
 
-impl RadixTreeRouter {
+impl RadixTree {
     pub fn new<const N: usize>(handlers: [Handler; N]) -> Self {
         let mut trie_tree = RangeTrieTree::new();
         for Handler { method, route:route_str, proc:handle_func } in handlers {
@@ -34,18 +123,18 @@ impl RadixTreeRouter {
             DELETE: Node::from_trie(trie_tree.DELETE),
         }
     }
-    pub fn search<'buf>(&self, path: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
-        todo!()
-    }
 }
 impl Node {
     pub(super) fn from_trie(mut node: range_trie_tree::Node) -> Self {
         let mut patterns = vec![node.pattern.clone()];
         (node, patterns) = Self::merge_single_child(node, patterns);
+
+        node.children.sort_by_key(|n| n.pattern.clone());
+
         Self {
             patterns:     patterns.into_iter().map(|p| Pattern::from(p)).collect(),
             handle_func:  node.handle_func,
-            children:     node.children.into_iter().map(|n| Self::from_trie(n)).collect(),
+            children:     node.children.into_iter().map(|n| Self::from_trie(n)).collect()
         }
     }
 
@@ -76,6 +165,27 @@ impl Node {
             Self::merge_single_child(node, patterns)
         } else {
             (node, patterns)
+        }
+    }
+}
+impl Pattern {
+    fn read_str(&self) -> Option<&&'static str> {
+        match self {
+            Self::Nil | Self::Param => None,
+            Self::Str(s) => Some(s),
+        }
+    }
+
+    fn is_nil(&self) -> bool {
+        match self {
+            Self::Nil => true,
+            _ => false,
+        }
+    }
+    fn is_param(&self) -> bool {
+        match self {
+            Self::Param => true,
+            _ => false,
         }
     }
 }

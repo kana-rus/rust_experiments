@@ -1,10 +1,12 @@
 use std::ops::Range;
 
+#[derive(PartialEq, Eq)]
 pub enum Pattern {
     Section(Section),
     Param,
     Nil,
 }
+#[derive(PartialEq, Eq)]
 pub struct Section {
     pub route_str: &'static str,
     pub range:     Range<usize>,
@@ -87,21 +89,31 @@ impl Section {
 }
 
 const _: (/* Pattern impls */) = {
-    impl PartialEq for Pattern {
-        fn eq(&self, other: &Self) -> bool {
-            match self {
-                Self::Nil => other.is_nil(),
-                Self::Param => other.is_param(),
-                _ => self.get_str() == other.get_str()
-            }
-        }
-    }
     impl Clone for Pattern {
         fn clone(&self) -> Self {
             match self {
                 Self::Nil => Self::Nil,
                 Self::Param => Self::Param,
                 Self::Section(s) => Self::Section(s.clone()),
+            }
+        }
+    }
+
+    impl Ord for Pattern {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            match self {
+                Self::Nil => unreachable!(),
+                Self::Param => std::cmp::Ordering::Greater,
+                Self::Section(s) => s.read_str().cmp(other.get_str().unwrap())
+            }
+        }
+    }
+    impl PartialOrd for Pattern {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            match self {
+                Self::Nil => unreachable!(),
+                Self::Param => Some(std::cmp::Ordering::Greater),
+                Self::Section(s) => s.read_str().partial_cmp(other.get_str()?),
             }
         }
     }
