@@ -1,9 +1,9 @@
 #![cfg(test)]
 use std::fmt::Debug;
 use std::ops::Range;
-use crate::router::{HandleFunc, Response};
+use crate::router::{HandleFunc, Response, Router};
 use super::range_trie_tree::{Node as TrieNode, Pattern as TriePattern, Section as TrieSection};
-use super::super::radix_tree::{Node as RadixNode, Pattern as RadixPattern};
+use super::super::radix_tree::{RadixTreeRouter, Node as RadixNode, Pattern as RadixPattern};
 
 const _: () = {
     impl PartialEq for RadixNode {
@@ -116,4 +116,42 @@ fn radix_from_trie() {
         Radix(vec![RadixPattern::Str("/users"), RadixPattern::Param], H(), vec![])
     ]);
     assert_eq!(RadixNode::from_trie(trie), radix);
+}
+
+#[test]
+fn search_radix() {
+    let GET = Radix(vec![RadixPattern::Str("/api")], None, vec![
+        Radix(vec![RadixPattern::Str("/users")], H(), vec![
+            Radix(vec![RadixPattern::Param], H(), vec![])
+        ]),
+        Radix(vec![RadixPattern::Str("/tasks")], None, vec![
+            Radix(vec![RadixPattern::Param], H(), vec![])
+        ])
+    ]);
+    let POST = Radix(vec![RadixPattern::Nil], None, vec![]);
+    let PATCH = Radix(vec![RadixPattern::Nil], None, vec![]);
+    let DELETE = Radix(vec![RadixPattern::Nil], None, vec![]);
+
+    let router = RadixTreeRouter {
+        GET: super::RadixNode::from_node(GET),
+        POST: super::RadixNode::from_node(POST),
+        PATCH: super::RadixNode::from_node(PATCH),
+        DELETE: super::RadixNode::from_node(DELETE),
+    };
+
+    let assert_search_hit = |request_line| assert!(
+        <RadixTreeRouter as Router<3>>::search(&router, request_line).is_some(),
+        "{request_line}"
+    );
+    let assert_search_not_hit = |request_line| assert!(
+        <RadixTreeRouter as Router<3>>::search(&router, request_line).is_none(),
+        "{request_line}"
+    );
+
+    assert_search_not_hit("GET /");
+    assert_search_hit("GET /api/users");
+    assert_search_hit("GET /api/tasks/1");
+    assert_search_not_hit("GET /api/tasks");
+    assert_search_hit("GET /api/users/42");
+    assert_search_not_hit("GET /api/tasks");
 }

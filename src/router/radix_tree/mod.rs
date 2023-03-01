@@ -36,49 +36,56 @@ const _: () = {
         fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
             let (method, path) = request_line.split_once(' ').unwrap();
             match method {
-                "GET" => self.GET,
-                "POST" => self.POST,
-                "PATCH" => self.PATCH,
-                "DELETE" => self.DELETE,
+                "GET" => self.GET.search(path, vec![]),
+                "POST" => self.POST.search(path, vec![]),
+                "PATCH" => self.PATCH.search(path, vec![]),
+                "DELETE" => self.DELETE.search(path, vec![]),
                 _ => return None
-            }.search(path, vec![])
+            }
         }
     }
 
     impl<'buf> RadixNode {
         fn search(&self,
-            mut path: &'buf str,
-            params:   Vec<&'buf str>,
+            mut path:   &'buf str,
+            mut params: Vec<&'buf str>,
         ) -> Option<(&HandleFunc, Vec<&'buf str>)> {
-            if path.is_empty() {return Some((&self.handle_func?, params))}
-
-                for pattern in self.patterns {
-                    if path.is_empty() {return None}
-                    match pattern {
-                        Pattern::Nil => unreachable!(),
-                        Pattern::Str(s) => path = path.strip_prefix(s)?,
-                        Pattern::Param => {
-                            match path[1..].find('/') {
-                                Some(len) => {
-                                    params.push(&path[1 .. 1+len]);
-                                    path = &path[1+len..]
-                                },
-                                None => {
-                                    params.push(&path[1..]);
-                                    path = ""
-                                },
-                            }
-                        },
-                    }
+            for pattern in self.patterns {
+                if path.is_empty() {return None}
+                match pattern {
+                    Pattern::Nil => break,
+                    Pattern::Str(s) => path = path.strip_prefix(s)?,
+                    Pattern::Param => {
+                        match path[1..].find('/') {
+                            Some(len) => {
+                                params.push(&path[1 .. 1+len]);
+                                path = &path[1+len..]
+                            },
+                            None => {
+                                params.push(&path[1..]);
+                                path = ""
+                            },
+                        }
+                    },
                 }
+            }
 
-                if path.is_empty() {
-                    Some((&self))
-                }
+            if path.is_empty() {
+                Some(((&self).handle_func.as_ref()?, params))
+            } else {
+                self.matchable_child(path)?.search(path, params)
+            }
         }
 
-        fn matching_chiild(&self, current_path: &str) -> Option<&Self> {
-            
+        fn matchable_child(&self, current_path: &str) -> Option<&Self> {
+            for child in &self.children {
+                match child.patterns.first()? {
+                    Pattern::Nil => unreachable!(),
+                    Pattern::Param =>  return Some(child),
+                    Pattern::Str(s) => if current_path.starts_with(s) {return Some(child)}
+                }
+            }
+            None
         }
     }
 };
@@ -165,27 +172,6 @@ impl Node {
             Self::merge_single_child(node, patterns)
         } else {
             (node, patterns)
-        }
-    }
-}
-impl Pattern {
-    fn read_str(&self) -> Option<&&'static str> {
-        match self {
-            Self::Nil | Self::Param => None,
-            Self::Str(s) => Some(s),
-        }
-    }
-
-    fn is_nil(&self) -> bool {
-        match self {
-            Self::Nil => true,
-            _ => false,
-        }
-    }
-    fn is_param(&self) -> bool {
-        match self {
-            Self::Param => true,
-            _ => false,
         }
     }
 }

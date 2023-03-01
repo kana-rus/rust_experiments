@@ -29,23 +29,10 @@ impl Pattern {
             Self::Section(_) => self.get_str() == another.get_str()
         }
     }
-    pub fn matches_str(&self, section_str: &str) -> bool {
-        match self {
-            Self::Nil => unreachable!(),
-            Self::Param => true,
-            Self::Section(s) => s.read_str() == section_str
-        }
-    }
 
     pub fn is_section(&self) -> bool {
         match self {
             Self::Section(_) => true,
-            _ => false,
-        }
-    }
-    pub fn is_param(&self) -> bool {
-        match self {
-            Self::Param => true,
             _ => false,
         }
     }

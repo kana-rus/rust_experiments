@@ -3,7 +3,7 @@ extern crate test;
 use test::Bencher;
 
 use experiment::router::{
-    Router, TrieTreeRouter, RegexSetRouter2, TrieTreeRouterWithString,
+    Router, TrieTreeRouter, RegexSetRouter2, TrieTreeRouterWithString, radix_tree::RadixTreeRouter,
 };
 
 mod setup {
@@ -77,7 +77,7 @@ mod setup {
     ];
 }
 
-#[bench] // 126,896 ns/iter (+/- 2,099)
+#[bench] // 128,547 ns/iter (+/- 2,347)
 fn trie_tree_router(b: &mut Bencher) {
     let router = TrieTreeRouter::new(setup::TEST_ROUTES());
     b.iter(|| for _ in 0..100 {
@@ -90,7 +90,7 @@ fn trie_tree_router(b: &mut Bencher) {
         }
     })
 }
-#[bench] // 131,681 ns/iter (+/- 8,848)
+#[bench] // 128,911 ns/iter (+/- 7,168)
 fn trie_tree_router_with_string(b: &mut Bencher) {
     let router = TrieTreeRouterWithString::new(setup::TEST_ROUTES());
     b.iter(|| for _ in 0..100 {
@@ -104,7 +104,21 @@ fn trie_tree_router_with_string(b: &mut Bencher) {
     })
 }
 
-#[bench] // 546,336 ns/iter (+/- 5,210)
+#[bench] // 86,382 ns/iter (+/- 1,445)
+fn radix_tree_router(b: &mut Bencher) {
+    let router = RadixTreeRouter::new(setup::TEST_ROUTES());
+    b.iter(|| for _ in 0..100 {
+        for case in setup::TEST_CASES {
+            let result = <RadixTreeRouter as Router<{setup::TEST_ROUTES_SIZE}>>::search(&router, &case);
+            match result {
+                Some(_) => println!("Found"),
+                None    => println!("Not found"),
+            }
+        }
+    })
+}
+
+#[bench] // 533,243 ns/iter (+/- 5,413)
 fn regex_set_router(b: &mut Bencher) {
     let router = RegexSetRouter2::new(setup::TEST_ROUTES());
     b.iter(|| for _ in 0..100 {
