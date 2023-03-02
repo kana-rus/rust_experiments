@@ -1,3 +1,6 @@
+mod with_static_nodes; pub use with_static_nodes::RadixTreeRouterWithStaticNodes;
+mod with_vec_patterns; pub use with_vec_patterns::RadixTreeRouterWithVecPatterns;
+
 pub struct RadixTreeRouter {
     GET: RadixNode,
     POST: RadixNode,
