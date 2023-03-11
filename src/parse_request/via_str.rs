@@ -50,23 +50,24 @@ impl Request {
             }
         };
 
+        start = len + 2/*'\r\n'*/;
         let mut headers = Headers::new();
-        start += len + 2/*'\r\n'*/;
         while let Some(line) = lines.next() {
-            if line.is_empty() {break}
+            dbg!(line);
+            if line.is_empty() {start += 2/*'\r\n'*/; break}
             let len = line.len();
 
-            let e = line.find('=').unwrap();
+            let c/*olon*/ = line.find(':').unwrap();
             headers.append(
-                start..(start+e),
-                (start+e+1)..(start+len)
+                start..(start+c),
+                (start+c+1/*' '*/+1)..(start+len)
             );
 
             start += len + 2/*'\r\n'*/;
         }
 
         let body = lines.next()
-            .map(|s| start..(start + s.len()));
+            .map(|s| start..(start + dbg!(s.split_once(' ').unwrap().0).len()));
 
         Self { buffer:Buffer(buffer), method, path, queries, headers, body }
     }
@@ -74,7 +75,7 @@ impl Request {
 
 #[cfg(test)]
 mod test {
-    use crate::parse_request::{TEST_REQUEST, REQUEST_BUFFER_SIZE, Request, Buffer};
+    use crate::parse_request::{TEST_REQUEST, REQUEST_BUFFER_SIZE, Request};
 
     #[test]
     fn parse_request_via_str() {
@@ -85,8 +86,10 @@ mod test {
         };
 
         let parsed = Request::parse_via_str(test_case.clone());
-        let buffer = Buffer(test_case);
-
-        assert_eq!();
+        assert_eq!(parsed.path(), "/search.html");
+        assert_eq!(parsed.query("q1"), Some("query"));
+        assert_eq!(parsed.query("q2"), Some("42"));
+        assert_eq!(parsed.header("Host"), Some("wa3.i-3-i.info"));
+        assert_eq!(parsed.body(), Some("q=test&submitSearch=%E6%A4%9C%E7%B4%A2"));
     }
 }

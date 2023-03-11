@@ -27,21 +27,25 @@ struct F(
 trait IntoF<E> {
     fn into_f(&'static self) -> F;
 }
-impl<'d, Func, Fut> IntoF<(Fut)> for Func
-where
-    Func: Fn(Arg, &'d Data) -> Fut + Send + Sync + 'static,
-    Fut:  Future<Output = Arg> + Send + 'static
-{
-    fn into_f(&'static self) -> F {
-        F(Box::new(|c, d| Box::pin({
-            let data_cloned = d.clone();
-            async {
-                let arg = self(c, &data_cloned).await;
-                (arg, d)
-            }
-        })))
-    }
-}
+/*
+    `data_cloned` does not live long enough
+    borrowed value does not live long enough
+*/
+// impl<'d, Func, Fut> IntoF<(Fut)> for Func
+// where
+//     Func: Fn(Arg, &'d Data) -> Fut + Send + Sync + 'static,
+//     Fut:  Future<Output = Arg> + Send + 'static
+// {
+//     fn into_f(&'static self) -> F {
+//         F(Box::new(|c, d| Box::pin({
+//             let data_cloned = d.clone();
+//             async {
+//                 let arg = self(c, &data_cloned).await;
+//                 (arg, d)
+//             }
+//         })))
+//     }
+// }
 
 struct Store(Vec<F>);
 impl Store {
@@ -73,5 +77,5 @@ fn main() {
     async fn a(a_arg: Arg, _: &Data) -> Arg {a_arg}
     async fn b(b_arg: Arg, _: &Data) -> Arg {b_arg}
 
-    store.push(&a);
+    // store.push(&a);
 }

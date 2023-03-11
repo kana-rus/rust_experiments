@@ -1,24 +1,26 @@
+#![allow(unused)]
 use std::{ops::{Index, RangeBounds}, slice::SliceIndex};
 
 pub mod via_str;
 pub mod u8slice_directly;
 
 
-const TEST_REQUEST: &'static str =
-"POST /search.html HTTP/1.1\r\n
-Host: wa3.i-3-i.info\r\n
-Connection: keep-alive\r\n
-Content-Length: 38\r\n
-Cache-Control: max-age=0\r\n
-Origin: http://wa3.i-3-i.info\r\n
-Upgrade-Insecure-Requests: 1\r\n
-User-Agent: unknown\r\n
-Content-Type: application/x-www-form-urlencoded\r\n
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\r\n
-Referer: http://wa3.i-3-i.info/index.html\r\n
-Accept-Encoding: gzip, deflate\r\n
-Accept-Language: ja,en-US;q=0.8,en;q=0.6\r\n
-\r\n
+const TEST_REQUEST: &'static str = /* `\r\n` is written `\r
+` */
+"POST /search.html?q1=query&q2=42 HTTP/1.1\r
+Host: wa3.i-3-i.info\r
+Connection: keep-alive\r
+Content-Length: 38\r
+Cache-Control: max-age=0\r
+Origin: http://wa3.i-3-i.info\r
+Upgrade-Insecure-Requests: 1\r
+User-Agent: unknown\r
+Content-Type: application/x-www-form-urlencoded\r
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\r
+Referer: http://wa3.i-3-i.info/index.html\r
+Accept-Encoding: gzip, deflate\r
+Accept-Language: ja,en-US;q=0.8,en;q=0.6\r
+\r
 q=test&submitSearch=%E6%A4%9C%E7%B4%A2";
 
 

@@ -58,19 +58,23 @@ fn combine<'arg>(this: &'arg F<'arg>, another: &'arg F<'arg>) -> F<'arg> {
         arg
     })))
 }
-fn combine_owned<'arg>(this: F<'arg>, another: F<'arg>) -> F<'arg> {
-    F(Box::new({
-        move |mut arg, data| {
-            let this = this.clone();
-            let another = another.clone();
-            Box::pin(async move {
-                arg = (this.0)(arg, data).await;
-                arg = (another.0)(arg, data).await;
-                arg
-            })
-        }
-    }))
-}
+/*
+    lifetime may not live long enough
+    closure implements `Fn`, so references to captured variables can't escape the closure
+*/
+// fn combine_owned<'arg>(this: F<'arg>, another: F<'arg>) -> F<'arg> {
+//     F(Box::new({
+//         move |mut arg, data| {
+//             let this = this.clone();
+//             let another = another.clone();
+//             Box::pin(async move {
+//                 arg = (this.0)(arg, data).await;
+//                 arg = (another.0)(arg, data).await;
+//                 arg
+//             })
+//         }
+//     }))
+// }
 
 fn main() {
     let mut store = Store::new();
