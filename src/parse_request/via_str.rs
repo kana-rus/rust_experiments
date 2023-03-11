@@ -67,7 +67,7 @@ impl Request {
         }
 
         let body = lines.next()
-            .map(|s| start..(start + dbg!(s.split_once(' ').unwrap().0).len()));
+            .map(|s| start..(start + dbg!(s.split_once('\0').unwrap().0).len()));
 
         Self { buffer:Buffer(buffer), method, path, queries, headers, body }
     }
@@ -81,7 +81,7 @@ mod test {
     fn parse_request_via_str() {
         let test_case: [u8; REQUEST_BUFFER_SIZE] = {
             let mut buffer = TEST_REQUEST.as_bytes().to_vec();
-            buffer.resize(REQUEST_BUFFER_SIZE, b' ');
+            buffer.resize(REQUEST_BUFFER_SIZE, 0);
             buffer.try_into().unwrap()
         };
 

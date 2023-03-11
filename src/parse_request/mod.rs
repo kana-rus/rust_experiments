@@ -5,7 +5,7 @@ pub mod via_str;
 pub mod u8slice_directly;
 
 
-const TEST_REQUEST: &'static str = /* `\r\n` is written `\r
+pub const TEST_REQUEST: &'static str = /* `\r\n` is written `\r
 ` */
 "POST /search.html?q1=query&q2=42 HTTP/1.1\r
 Host: wa3.i-3-i.info\r
@@ -32,10 +32,10 @@ pub struct Request {
     headers: Headers,
     body:    Option<BufRange>,
 } impl Request {
-    #[inline] fn path(&self) -> &str {
+    #[inline] pub fn path(&self) -> &str {
         &self.buffer[&self.path]
     }
-    #[inline] fn query(&self, key: &str) -> Option<&str> {
+    #[inline] pub fn query(&self, key: &str) -> Option<&str> {
         let QueryParams { params, next } = &self.queries;
         for k_v in &params[..*next as usize] {
             let (k, v) = k_v.as_ref().unwrap();
@@ -45,7 +45,7 @@ pub struct Request {
         }
         None
     }
-    #[inline] fn header(&self, key: &str) -> Option<&str> {
+    #[inline] pub fn header(&self, key: &str) -> Option<&str> {
         let Headers { headers, next } = &self.headers;
         for k_v in &headers[..*next as usize] {
             let (k, v) = k_v.as_ref().unwrap();
@@ -55,15 +55,15 @@ pub struct Request {
         }
         None
     }
-    #[inline] fn body(&self) -> Option<&str> {
+    #[inline] pub fn body(&self) -> Option<&str> {
         Some(&self.buffer[(&self.body).as_ref()?])
     }
 }
 
 
-const REQUEST_BUFFER_SIZE: usize = 1024;
-const QUERY_PARAMS_LIMIT : usize = 4;
-const HEADERS_LIMIT      : usize = 32;
+pub const REQUEST_BUFFER_SIZE: usize = 1024;
+pub const QUERY_PARAMS_LIMIT : usize = 4;
+pub const HEADERS_LIMIT      : usize = 32;
 
 type BufRange = std::ops::Range<usize>;
 struct Buffer(
