@@ -97,7 +97,16 @@ enum Method {
             "POST" => Self::POST,
             "PATCH" => Self::PATCH,
             "DELETE" => Self::DELETE,
-            _ => panic!("unknown method: {string}")
+            _ => panic!("unknown method: `{string}`")
+        }
+    }
+    #[inline] fn parse_bytes(bytes: &[u8]) -> Self {
+        match bytes {
+            b"GET" => Self::GET,
+            b"POST" => Self::POST,
+            b"PATCH" => Self::PATCH,
+            b"DELETE" => Self::DELETE,
+            _ => panic!("unknown method: `{}`", unsafe {std::str::from_utf8_unchecked(bytes)})
         }
     }
 }
