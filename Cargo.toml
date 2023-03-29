@@ -8,3 +8,4 @@ ndarray = "0.15.6"
 regex = "1.7.1"
 async-std = "1"
 tokio = { version = "1.26.0", features = ["full"] }
+fxhash = "0.2.1"
