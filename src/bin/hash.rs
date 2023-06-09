@@ -26,8 +26,7 @@ fn my_hash(s: &str) -> u32 {
     // write()
     while bytes.len() >= 4 {
         hash_word(&mut hash, u32::from_le_bytes(bytes[..4].try_into().unwrap()));
-        // bytes = &bytes[4..]
-        bytes = bytes.split_at(4).1
+        bytes = &bytes[4..]
     }
     for b in bytes {
         hash_word(&mut hash, *b as u32)
