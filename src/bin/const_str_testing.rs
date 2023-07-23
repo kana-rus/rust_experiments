@@ -90,10 +90,7 @@ const _: (/* 黒魔術 */) = {
     impl<const NAME: &'static str> IsMyLang<{is_one_of(NAME, MY_LANGS)}> for Lang<NAME> {}
     impl<const NAME: &'static str> MyLang for Lang<NAME> where Self: IsMyLang<true> {}
 
-    impl<const NAME: &'static str> Lang<NAME>
-    where
-        Self: MyLang
-    {
+    impl<const NAME: &'static str> Lang<NAME> where Self: MyLang {
         fn is_my_lang(&self) {}
     }
 };
@@ -105,8 +102,9 @@ fn main() {
     let go = Lang::<"Go">;
     go.is_my_lang();
 
-    let kotlin = Lang::<"Kotlin">;
-    kotlin.is_my_lang();
+    // <error>
+    // let kotlin = Lang::<"Kotlin">;
+    // kotlin.is_my_lang();
 
     let c = Lang::<"C">;
     c.is_my_lang();
