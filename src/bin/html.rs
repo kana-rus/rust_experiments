@@ -1,8 +1,10 @@
 macro_rules! html {
-    (<$tag:ident>) => {
+    (<$tag_open:ident></$tag_close:ident>) => {
         {
-            let _: Tag = Tag::$tag;
+            let _: Tag = Tag::$tag_open;
+            let _: Tag = Tag::$tag_close;
             concat!("<", stringify!($tag), ">")
+            "<h1></h1>"
         }
     };
 }
@@ -19,6 +21,6 @@ enum Tag {
 
 
 fn main() {
-    let h1 = html!(<h2>);
-    println!("{h1}")
+    // let h1 = html!(<h);
+    // println!("{h1}")
 }
