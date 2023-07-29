@@ -42,7 +42,7 @@ const CASES: &[(&str, (usize, usize), &str)] = &[
 
 // m < n を仮定する.
 mod swappers {
-    use std::{slice, cmp::Ordering};
+    use std::cmp::Ordering;
 
     pub fn swap_chars_0(string: &mut String, m: usize, n: usize) {
         let mut chars = string.chars().collect::<Vec<_>>();
@@ -161,65 +161,25 @@ mod swappers {
     }
 }
 
-#[bench]
-fn swap_chars_0(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_0(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
-}
-
-#[bench]
-fn swap_chars_1(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_1(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
-}
-
-#[bench]
-fn swap_chars_2(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_2(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
-}
-
-#[bench]
-fn swap_chars_3(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_3(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
-}
-
-#[bench]
-fn swap_chars_3_v2(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_3_v2(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
-}
-
-#[bench]
-fn swap_chars_3_v3(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_3_v3(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
-}
-
-#[bench]
-fn swap_chars_4(b: &mut Bencher) {
-    b.iter(|| for (case, (m, n), expected) in CASES {
-        let mut case = case.to_string();
-        swappers::swap_chars_4(&mut case, *m, *n);
-        assert_eq!(&case, expected)
-    })
+macro_rules! benchmark {
+    ($($target:ident)*) => {
+        $(
+            #[bench]
+            fn $target(b: &mut Bencher) {
+                b.iter(|| for (case, (m, n), expected) in CASES {
+                    let mut case = case.to_string();
+                    swappers::$target(&mut case, *m, *n);
+                    assert_eq!(&case, expected)
+                })
+            }
+        )*
+    };
+} benchmark! {
+    swap_chars_0
+    swap_chars_1
+    swap_chars_2
+    swap_chars_3
+    swap_chars_3_v2
+    swap_chars_3_v3
+    swap_chars_4
 }
