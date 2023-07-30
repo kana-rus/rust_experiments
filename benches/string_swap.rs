@@ -179,6 +179,44 @@ mod swappers {
         bytes[pos_m..(pos_n+len_n)].rotate_right(len_n);
         bytes[(pos_m+len_n)..(pos_n+len_n)].rotate_left(len_m);
     }
+
+    pub fn swap_chars_7(string: &mut String, m: usize, n: usize) {
+        let (pos_m, char_m) = string.char_indices().nth(m).unwrap();
+        let (pos_n, char_n) = string.char_indices().nth(n).unwrap();
+        let (len_m, len_n) = (char_m.len_utf8(), char_n.len_utf8());
+        
+        let bytes = unsafe {string.as_mut_vec()};
+
+        let len = len_m.min(len_n);
+        let (left, right) = bytes.split_at_mut(pos_n);
+        left[pos_m..(pos_m+len)].swap_with_slice(&mut right[..len]);
+
+        if len_m > len_n {
+            bytes[(pos_m+len_n)..(pos_n+len_n)].rotate_left(len_m-len_n)
+        } else if len_m < len_n {
+            bytes[(pos_m+len_m)..(pos_n+len_n)].rotate_right(len_n-len_m)
+        }
+    }
+
+    pub fn swap_chars_7_v2(string: &mut String, m: usize, n: usize) {
+        let (pos_m, char_m) = string.char_indices().nth(m).unwrap();
+        let (pos_n, char_n) = string.char_indices().nth(n).unwrap();
+        let (len_m, len_n) = (char_m.len_utf8(), char_n.len_utf8());
+        
+        let mut bytes = std::mem::take(string).into_bytes();
+
+        let len = len_m.min(len_n);
+        let (left, right) = bytes.split_at_mut(pos_n);
+        left[pos_m..(pos_m+len)].swap_with_slice(&mut right[..len]);
+
+        if len_m > len_n {
+            bytes[(pos_m+len_n)..(pos_n+len_n)].rotate_left(len_m-len_n)
+        } else if len_m < len_n {
+            bytes[(pos_m+len_m)..(pos_n+len_n)].rotate_right(len_n-len_m)
+        }
+
+        *string = String::from_utf8(bytes).unwrap()
+    }
 }
 
 macro_rules! benchmark {
@@ -195,13 +233,15 @@ macro_rules! benchmark {
         )*
     };
 } benchmark! {
-    swap_chars_0
-    swap_chars_1
-    swap_chars_2
-    swap_chars_3
-    swap_chars_3_v2
+    // swap_chars_0
+    // swap_chars_1
+    // swap_chars_2
+    // swap_chars_3
+    // swap_chars_3_v2
     swap_chars_3_v3
-    swap_chars_4
-    swap_chars_5_left
-    swap_chars_5_right
+    // swap_chars_4
+    // swap_chars_5_left
+    // swap_chars_5_right
+    swap_chars_7
+    swap_chars_7_v2
 }
