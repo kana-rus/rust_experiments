@@ -217,6 +217,26 @@ mod swappers {
 
         *string = String::from_utf8(bytes).unwrap()
     }
+
+    pub fn swap_chars_7_v3(string: &mut String, m: usize, n: usize) {
+        let (pos_m, char_m) = string.char_indices().nth(m).unwrap();
+        let (pos_n, char_n) = string.char_indices().nth(n).unwrap();
+        let (len_m, len_n) = (char_m.len_utf8(), char_n.len_utf8());
+        
+        let mut bytes = std::mem::take(string).into_bytes();
+
+        let len = len_m.min(len_n);
+        let (left, right) = bytes.split_at_mut(pos_n);
+        left[pos_m..(pos_m+len)].swap_with_slice(&mut right[..len]);
+
+        if len_m > len_n {
+            bytes[(pos_m+len_n)..(pos_n+len_n)].rotate_left(len_m-len_n)
+        } else if len_m < len_n {
+            bytes[(pos_m+len_m)..(pos_n+len_n)].rotate_right(len_n-len_m)
+        }
+
+        *string = unsafe {String::from_utf8_unchecked(bytes)}
+    }
 }
 
 macro_rules! benchmark {
@@ -244,4 +264,5 @@ macro_rules! benchmark {
     // swap_chars_5_right
     swap_chars_7
     swap_chars_7_v2
+    swap_chars_7_v3
 }
