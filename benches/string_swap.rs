@@ -159,6 +159,26 @@ mod swappers {
         );
         *bytes = [left, bytes_n, mid, bytes_m, right].concat()
     }
+
+    pub fn swap_chars_5_left(string: &mut String, m: usize, n: usize) {
+        let (pos_m, char_m) = string.char_indices().nth(m).unwrap();
+        let (pos_n, char_n) = string.char_indices().nth(n).unwrap();
+        let (len_m, len_n) = (char_m.len_utf8(), char_n.len_utf8());
+        
+        let bytes = unsafe {string.as_mut_vec()};
+        bytes[pos_m..(pos_n+len_n)].rotate_left(len_m);
+        bytes[pos_m..(pos_n+len_n-len_m)].rotate_right(len_n);
+    }
+
+    pub fn swap_chars_5_right(string: &mut String, m: usize, n: usize) {
+        let (pos_m, char_m) = string.char_indices().nth(m).unwrap();
+        let (pos_n, char_n) = string.char_indices().nth(n).unwrap();
+        let (len_m, len_n) = (char_m.len_utf8(), char_n.len_utf8());
+        
+        let bytes = unsafe {string.as_mut_vec()};
+        bytes[pos_m..(pos_n+len_n)].rotate_right(len_n);
+        bytes[(pos_m+len_n)..(pos_n+len_n)].rotate_left(len_m);
+    }
 }
 
 macro_rules! benchmark {
@@ -182,4 +202,6 @@ macro_rules! benchmark {
     swap_chars_3_v2
     swap_chars_3_v3
     swap_chars_4
+    swap_chars_5_left
+    swap_chars_5_right
 }
