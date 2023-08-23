@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        p {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <p id="text"></p>
+
+    <script>
+        // function setText() {
+            const p = document.getElementById("text");
+            p.innerHTML = "abcd\r\n\r\nefg";
+        // }
+    </script>
+</body>
+</html>
