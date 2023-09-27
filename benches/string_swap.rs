@@ -263,6 +263,6 @@ macro_rules! benchmark {
     // swap_chars_5_left
     // swap_chars_5_right
     swap_chars_7
-    swap_chars_7_v2
+    // swap_chars_7_v2
     swap_chars_7_v3
 }

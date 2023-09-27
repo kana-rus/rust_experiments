@@ -1,7 +1,7 @@
 use worker::*;
 
-async fn __(req: Request) {
-    req.form_data().await
+async fn __(mut req: Request) {
+    req.form_data().await;
 }
 
 fn main() {
