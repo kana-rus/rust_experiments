@@ -7,8 +7,8 @@ pub mod radix_tree;
 pub mod regex_set; pub use regex_set::{/*RegexSetRouter1, */ RegexSetRouter2};
 pub mod single_regex;
 
-pub trait Router<const N: usize> {
-    fn new(handlers: [Handler; N]) -> Self;
+pub trait Router {
+    fn new<const N: usize>(handlers: [Handler; N]) -> Self;
     /// `request_line` は末尾の ` HTTP/1.1` を除いた `{method} {path}` の形を想定
     fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)>;
 }
@@ -32,7 +32,7 @@ pub struct Request {
     pub path:   &'static str,
 } impl Request {
     #[allow(unused)] /// just for test
-    fn from(request_line: &'static str) -> Self {
+    pub fn from(request_line: &'static str) -> Self {
         match request_line.split_once(' ').unwrap() {
             ("GET", path) => Self { method: Method::GET, path },
             ("POST", path) => Self { method: Method::POST, path },
@@ -139,7 +139,7 @@ mod test {
     fn trie_tree_router() {
         let router = TrieTreeRouter::new(TEST_ROUTES());
         for Case { request, expect } in TEST_CASES {
-            match <TrieTreeRouter as Router<TEST_ROUTES_SIZE>>::search(&router, &request) {
+            match <TrieTreeRouter as Router>::search(&router, &request) {
                 None                   => assert!(expect.is_none(), "in {request}"),
                 Some((handle_func, _)) => assert_response(handle_func(Request::from(request)), expect, &request),
             }

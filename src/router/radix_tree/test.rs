@@ -91,29 +91,29 @@ fn radix_from_trie() {
         ]),
     ]);
     let radix = Radix(vec![RadixPattern::Str("/api")], None, vec![
+        Radix(vec![RadixPattern::Str("/tasks/completed")], None, vec![]),
         Radix(vec![RadixPattern::Str("/v2/users")], None, vec![]),
-        Radix(vec![RadixPattern::Str("/tasks/completed")], None, vec![])
     ]);
     assert_eq!(RadixNode::from_trie(trie), radix);
 
 
     let trie = Trie(TriePattern::Nil, None, vec![
         Trie(S1(0..4), None, vec![
+            Trie(S3(4..10), None, vec![
+                Trie(TriePattern::Param, H(), vec![])
+            ]),
             Trie(S1(4..7), None, vec![
                 Trie(S1(7..13), H(), vec![
                     Trie(TriePattern::Param, H(), vec![])
                 ])
             ]),
-            Trie(S3(4..10), None, vec![
-                Trie(TriePattern::Param, H(), vec![])
-            ])
         ])
     ]);
     let radix = Radix(vec![RadixPattern::Str("/api")], None, vec![
+        Radix(vec![RadixPattern::Str("/users"), RadixPattern::Param], H(), vec![]),
         Radix(vec![RadixPattern::Str("/v2/users")], H(), vec![
             Radix(vec![RadixPattern::Param], H(), vec![])
         ]),
-        Radix(vec![RadixPattern::Str("/users"), RadixPattern::Param], H(), vec![])
     ]);
     assert_eq!(RadixNode::from_trie(trie), radix);
 }
@@ -140,11 +140,11 @@ fn search_radix() {
     };
 
     let assert_search_hit = |request_line| assert!(
-        <RadixTreeRouter as Router<3>>::search(&router, request_line).is_some(),
+        <RadixTreeRouter as Router>::search(&router, request_line).is_some(),
         "{request_line}"
     );
     let assert_search_not_hit = |request_line| assert!(
-        <RadixTreeRouter as Router<3>>::search(&router, request_line).is_none(),
+        <RadixTreeRouter as Router>::search(&router, request_line).is_none(),
         "{request_line}"
     );
 

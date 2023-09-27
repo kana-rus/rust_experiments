@@ -34,12 +34,12 @@ struct RadixNode {
 }
 
 const _: () = {
-    impl<const N: usize> Router<N> for RadixTreeRouterWithVecPatterns {
-        fn new(handlers: [Handler; N]) -> Self {
+    impl Router for RadixTreeRouterWithVecPatterns {
+        fn new<const N: usize>(handlers: [Handler; N]) -> Self {
             let tree = RadixTree::new(handlers);
             Self::from_radix_tree(tree)
         }
-        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
+        #[inline] fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
             let (method, path) = request_line.split_once(' ').unwrap();
             match method {
                 "GET" => self.GET.search(path, vec![]),

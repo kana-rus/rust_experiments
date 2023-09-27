@@ -103,8 +103,8 @@ struct Path<'buf>(
 
 
 const _: () = {
-    impl<const N: usize> Router<N> for TrieTreeRouter {
-        fn new(handlers: [Handler; N]) -> Self {
+    impl Router for TrieTreeRouter {
+        fn new<const N: usize>(handlers: [Handler; N]) -> Self {
             let mut this = Self::new();
             for Handler { method, route, proc } in handlers {
                 match method {
@@ -230,7 +230,7 @@ DELTE: {:?}
     #[test]
     fn trie_tree_new() {
         assert_eq!(
-            <TrieTreeRouter as Router<1>>::new([
+            <TrieTreeRouter as Router>::new([
                 handler(GET, "/")
             ]), TrieTreeRouter {
                 GET: Node(Nil, Handler(), vec![]),
@@ -240,7 +240,7 @@ DELTE: {:?}
             }
         );
         assert_eq!(
-            <TrieTreeRouter as Router<1>>::new([
+            <TrieTreeRouter as Router>::new([
                 handler(GET, "/api")
             ]), TrieTreeRouter {
                 GET: Node(Nil, None, vec![
@@ -252,7 +252,7 @@ DELTE: {:?}
             }
         );
         assert_eq!(
-            <TrieTreeRouter as Router<2>>::new([
+            <TrieTreeRouter as Router>::new([
                 handler(GET, "/api/users"),
                 handler(GET, "/api/users/:id"),
             ]), TrieTreeRouter {
@@ -269,7 +269,7 @@ DELTE: {:?}
             }
         );
         assert_eq!(
-            <TrieTreeRouter as Router<4>>::new([
+            <TrieTreeRouter as Router>::new([
                 handler(GET, "/api/users/:id"),
                 handler(POST, "/api/users"),
                 handler(GET, "/api/tasks/completed/:user_id"),
@@ -304,8 +304,8 @@ DELTE: {:?}
     #[test]
     fn trie_tree_search() {
         fn assert_search<const N: usize>(request_line: &'static str, routes: [(crate::router::Method, &'static str); N], expect_params: Option<&'static [&'static str]>) {
-            match <TrieTreeRouter as Router<N>>::search(
-                &<TrieTreeRouter as Router<N>>::new(routes.map(|(method, route)| crate::router::test::handler(method, route))),
+            match <TrieTreeRouter as Router>::search(
+                &<TrieTreeRouter as Router>::new(routes.map(|(method, route)| crate::router::test::handler(method, route))),
                 request_line
             ) {
                 None              => assert_eq!(expect_params, None),

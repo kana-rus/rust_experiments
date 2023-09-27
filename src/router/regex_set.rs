@@ -43,19 +43,18 @@ use super::{Handler, Router, Method, HandleFunc};
 // };
 // 
 
-pub struct RegexSetRouter2<const N: usize> {
+pub struct RegexSetRouter2 {
     regex_set:    RegexSet,
-    routes:       [Regex; N],
-    handle_funcs: [(HandleFunc, bool/* requires params */); N],
+    routes:       Vec<Regex>,
+    handle_funcs: Vec<(HandleFunc, bool/* requires params */)>,
 }
 const _: () = {
-    impl<const N: usize> Router<N> for RegexSetRouter2<N> {
-        fn new(handlers: [Handler; N]) -> Self {
+    impl Router for RegexSetRouter2 {
+        fn new<const N: usize>(handlers: [Handler; N]) -> Self {
             let handlers = handlers.map(|h| {
                 let reuiqres_params = (&h.route).contains(':');
                 (h, reuiqres_params)
             });
-
             let routes = {
                 let mut routes = Vec::with_capacity(N);
 
@@ -75,14 +74,19 @@ const _: () = {
                 routes
             };
 
+            let mut handle_funcs = Vec::with_capacity(N);
+            for (h, rp) in handlers {
+                handle_funcs.push((h.proc, rp))
+            }
+
             Self {
                 regex_set:    RegexSet::new(&routes).unwrap(),
-                routes:       TryInto::<[String; N]>::try_into(routes).unwrap().map(|s| Regex::new(&s).unwrap()),
-                handle_funcs: handlers.map(|(h, p)| (h.proc, p)),
+                routes:       TryInto::<[String; N]>::try_into(routes).unwrap().map(|s| Regex::new(&s).unwrap()).to_vec(),
+                handle_funcs,
             }
         }
 
-        fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
+        #[inline] fn search<'buf>(&self, request_line: &'buf str) -> Option<(&HandleFunc, Vec<&'buf str>)> {
             let matched = self.regex_set.matches(request_line)
                 .into_iter()
                 .last()?;

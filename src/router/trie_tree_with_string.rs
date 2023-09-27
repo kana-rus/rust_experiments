@@ -105,8 +105,8 @@ struct Path<'buf>(
 
 
 const _: () = {
-    impl<const N: usize> Router<N> for TrieTreeRouterWithString {
-        fn new(handlers: [Handler; N]) -> Self {
+    impl Router for TrieTreeRouterWithString {
+        fn new<const N: usize>(handlers: [Handler; N]) -> Self {
             let mut this = Self::new();
             for Handler { method, route, proc } in handlers {
                 match method {
