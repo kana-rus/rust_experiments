@@ -5,8 +5,8 @@ use test::Bencher;
 use experiment::router::{Router,
     // TrieTreeRouter,
     // TrieTreeRouterWithString,
-    // RegexSetRouter2,
-    // single_regex::SingleRegexRouter,
+    RegexSetRouter2,
+    single_regex::SingleRegexRouter,
     radix_tree::{
         RadixTreeRouter,
         RadixTreeRouterWithStaticNodes,
@@ -113,6 +113,6 @@ macro_rules! benchmark {
     RadixTreeRouter
     RadixTreeRouterWithStaticNodes
     RadixTreeRouterWithVecPatterns
-    // RegexSetRouter2
-    // SingleRegexRouter
+    RegexSetRouter2
+    SingleRegexRouter
 }
