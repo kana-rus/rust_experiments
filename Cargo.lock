@@ -210,6 +210,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
 
 [[package]]
+name = "byte_reader"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ece05ac0860857e8ae3e6240a89f4cc4eefc397a508a704607942e5bd937e6d"
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -343,6 +349,7 @@ name = "experiment"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "byte_reader",
  "fxhash",
  "libflate",
  "ndarray",
