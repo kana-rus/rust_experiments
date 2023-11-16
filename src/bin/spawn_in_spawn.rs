@@ -40,9 +40,15 @@ struct SocketStore { lock:    OnceLock<UnsafeCell<SocketCell>> }
 struct SocketCell  { context: Option<Context> }
 struct Socket      { message: &'static str }
 
+#[allow(non_snake_case)] fn StoredCell() -> &'static mut SocketCell {
+    unsafe {
+        &mut *STORE.lock
+            .get_or_init(|| UnsafeCell::new(SocketCell{context:None}))
+            .get()
+    }
+}
+
 unsafe impl Sync for SocketStore {}
-//unsafe impl Send for SocketStore {}
-//unsafe impl Send for SocketCell {}
 
 impl SocketStore {
     const fn new() -> Self {
@@ -50,36 +56,8 @@ impl SocketStore {
             lock: OnceLock::new(),
         }
     }
-
-    async fn get(&self) -> &mut SocketCell {
-        loop {
-            let lock = &self.lock;
-            match lock.get() {
-                Some(cell) => break unsafe {&mut *cell.get()},
-                None       => {println!("[sleep]"); sleep(Duration::from_micros(1)).await}
-            }
-        }
-    }
-
-    fn reserve(&self, c: Context) {
-        self.lock.set(UnsafeCell::new(SocketCell::new(c)))
-            .ok().expect("Failed to reserve")
-    }
 }
 
-const _: () = {
-    impl SocketStore {
-        async fn assume_ready_socket(&self) -> Socket {
-            self.get().await.await
-        }
-    }
-};
-
-impl SocketCell {
-    fn new(c: Context) -> Self {
-        Self { context: Some(c) }
-    }
-}
 impl Future for SocketCell {
     type Output = Socket;
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
@@ -93,11 +71,11 @@ impl Future for SocketCell {
 
 async fn store(c: Context) {
     println!("[store] count = {}", c.count());
-    STORE.reserve(c);
+    StoredCell().context = Some(c);
     println!("[store] done");
 }
 async fn assume_ready_socket() -> Socket {
-    STORE.assume_ready_socket().await
+    StoredCell().await
 }
 
 
@@ -129,10 +107,9 @@ async fn handle(c2: Context) -> bool {
     println!("[c2 in handle] count = {}", c2.count());
 
     tokio::spawn(async move {
-        //println!("[c2 in spawn in handle] count = {}", c2.count());
         let socket = assume_ready_socket().await;
         println!("[socket] {}", socket.message);
-    }).await;
+    });
 
     println!("[handle] returning true");
     true
