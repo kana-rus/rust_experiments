@@ -1,8 +1,6 @@
 use std::cell::UnsafeCell;
 use std::sync::{Arc, OnceLock};
 use std::future::Future;
-use tokio::sync::{Mutex, RwLock};
-use tokio::time::{sleep, Duration};
 
 
 struct Context {
@@ -62,9 +60,10 @@ impl Future for SocketCell {
     type Output = Socket;
     fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
         let this = &mut self.get_mut().context;
-        match this.as_ref().unwrap().count() {
-            1 => std::task::Poll::Ready(Socket {message: this.take().unwrap().into_inner()}),
-            c => {println!("Pending: {c}"); std::task::Poll::Pending},
+        match this.as_ref().map(|c| c.count()) {
+            Some(1) => std::task::Poll::Ready(Socket {message: this.take().unwrap().into_inner()}),
+            Some(c) => {println!("Pending:  {c}"); cx.waker().wake_by_ref(); std::task::Poll::Pending}
+            None    => {println!("Pending: None"); cx.waker().wake_by_ref(); std::task::Poll::Pending}
         }
     }
 }
