@@ -206,7 +206,7 @@ mod upgrade {
 
     struct Socket {
         context: Context,
-        _stream:  Stream,
+        _stream: Stream,
     } impl Socket {
         async fn handle_messages(&self) {
             println!("[socket {}] handling messages",
@@ -218,8 +218,7 @@ mod upgrade {
         }
     }
 
-    async fn handle(mut c: Context) -> (Response, Option<UpgradeID>) {
-        let requires_upgrade = true;
+    async fn handle(mut c: Context) -> (Response, Option<UpgradeID>) {let requires_upgrade = true;
         let mut upgrade_id   = None;
 
         if requires_upgrade {
@@ -235,7 +234,7 @@ mod upgrade {
 
                 let socket = Socket {
                     context: c,
-                    _stream:  assume_upgradable(id).await
+                    _stream: assume_upgradable(id).await
                 };
 
                 socket.handle_messages().await;
