@@ -56,6 +56,11 @@ mod upgrade {
 
     /// SAFETY: This must be called after the corresponded `reserve_upgrade`
     pub async unsafe fn set_stream(id: UpgradeID, stream: Arc<Mutex<Stream>>) {
+        #[cfg(debug_assertions)] assert!(
+            UpgradeStreams().get().get(id.as_usize()).is_some_and(|cell| cell.is_just_reserved()),
+            "Cell not reserved"
+        );
+
         (UpgradeStreams().get_mut())[id.as_usize()].stream = Some(stream);
     }
 
