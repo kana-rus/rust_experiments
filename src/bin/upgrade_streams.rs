@@ -187,13 +187,24 @@ mod upgrade {
     use std::sync::Arc;
     use tokio::sync::Mutex;
 
+
     struct Context {
+        context_id: usize,
         upgrade_id: Option<UpgradeID>,
-    } impl Context {
+    }
+    use std::sync::{OnceLock, Mutex as stdMutex};
+    static CONTEXT_ID: OnceLock<stdMutex<usize>> = OnceLock::new();
+    impl Context {
         fn new() -> Self {
-            Self {
+            let mut context_id = CONTEXT_ID.get_or_init(|| stdMutex::new(0)).lock().unwrap();
+            *context_id += 1;
+
+            let me = Self {
+                context_id: *context_id,
                 upgrade_id: None,
-            }
+            };
+            println!("[context #{}] created...", me.context_id);
+            me
         }
     }
 
@@ -208,18 +219,29 @@ mod upgrade {
         context: Context,
         _stream: Stream,
     } impl Socket {
+        async fn new(c: Context, upgrade_id: UpgradeID) -> Self {
+            let context_id = c.context_id;
+            let me = Socket {
+                context: c,
+                _stream: assume_upgradable(upgrade_id).await
+            };
+            println!("===== context #{context_id} ---> socket #{upgrade_id} =====");
+            me
+        }
         async fn handle_messages(&self) {
-            println!("[socket {}] handling messages",
+            println!("[socket #{}] handling messages",
                 self.context.upgrade_id.unwrap());
         }
         async fn close(self) {
-            println!("[socket {}] closing...",
+            println!("[socket #{}] closing...",
                 self.context.upgrade_id.unwrap());
         }
     }
 
     async fn handle(mut c: Context) -> (Response, Option<UpgradeID>) {let requires_upgrade = true;
-        let mut upgrade_id   = None;
+        println!("[context #{}] handling", c.context_id);
+
+        let mut upgrade_id = None;
 
         if requires_upgrade {
             let id = reserve_upgrade().await;
@@ -232,11 +254,7 @@ mod upgrade {
                 let Some(id) = c.upgrade_id
                     else {panic!("Context doesn't have upgrade id")};
 
-                let socket = Socket {
-                    context: c,
-                    _stream: assume_upgradable(id).await
-                };
-
+                let socket = Socket::new(c, id).await;
                 socket.handle_messages().await;
                 socket.close().await;
             });
@@ -246,15 +264,17 @@ mod upgrade {
     }
 
 
-
-    for msecs in [42, 128, 64, 55, 60, 72, 111] {
+    for (i, msecs) in [42, 128, 64, 55, 60, 72, 111].into_iter().enumerate() {
         let stream = Arc::new(Mutex::new({
             tokio::time::sleep(tokio::time::Duration::from_millis(msecs)).await;
             Stream
         }));
+        println!("[stream {i}] emitted (after {msecs} sleep)");
 
         match tokio::spawn({
             let stream = stream.clone();
+            println!("[stream {i}] cloned");
+
             async move {
                 let stream = &mut *stream.lock().await;
                 let (res, upgrade_id) = handle(Context::new()).await;
@@ -264,7 +284,9 @@ mod upgrade {
         }).await {
             Ok(upgrade_id) => {
                 if let Some(id) = upgrade_id {
-                    set_stream(id, stream).await
+                    println!("[stream {i}] handled: Ok(#{id})");
+                    set_stream(id, stream).await;
+                    println!("[stream {i}] requested upgrade to socket #{id}...");
                 }
             }
             Err(e) => eprintln!("error: {e}")
