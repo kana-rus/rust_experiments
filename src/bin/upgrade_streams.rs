@@ -54,8 +54,9 @@ mod upgrade {
         ReserveUpgrade.await
     }
 
-    pub async fn set_stream(id: UpgradeID, stream: Arc<Mutex<Stream>>) {
-        (unsafe {UpgradeStreams().get_mut()})[id.as_usize()].stream = Some(stream);
+    /// SAFETY: This must be called after the corresponded `reserve_upgrade`
+    pub async unsafe fn set_stream(id: UpgradeID, stream: Arc<Mutex<Stream>>) {
+        (UpgradeStreams().get_mut())[id.as_usize()].stream = Some(stream);
     }
 
     pub async fn assume_upgradable(id: UpgradeID) -> Stream {
@@ -281,7 +282,7 @@ mod upgrade {
             Ok(upgrade_id) => {
                 if let Some(id) = upgrade_id {
                     println!("[stream   {i}] handled: Ok(#{id})");
-                    set_stream(id, stream).await;
+                    unsafe {set_stream(id, stream).await};
                     println!("[stream   {i}] requested upgrade to socket #{id}...");
                 }
             }
