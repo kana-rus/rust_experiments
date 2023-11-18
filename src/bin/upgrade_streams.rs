@@ -55,21 +55,6 @@ mod upgrade {
     }
 
     pub async fn set_stream(id: UpgradeID, stream: Arc<Mutex<Stream>>) {
-        struct EnsureReserved{id: UpgradeID}
-        impl Future for EnsureReserved {
-            type Output = ();
-            fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
-                let Some(cell) = UpgradeStreams().get().get(self.id.as_usize())
-                    else {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
-                
-                if !cell.is_just_reserved()
-                    {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
-
-                std::task::Poll::Ready(())
-            }
-        }
-
-        EnsureReserved{id}.await;
         (unsafe {UpgradeStreams().get_mut()})[id.as_usize()].stream = Some(stream);
     }
 
@@ -81,7 +66,7 @@ mod upgrade {
                 let Some(StreamCell { reserved, stream }) = (unsafe {UpgradeStreams().get_mut()}).get_mut(self.id.as_usize())
                     else {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
 
-                if !stream.as_ref().is_some_and(|arc| Arc::strong_count(&arc) == 1)
+                if !stream.as_ref().is_some_and(|arc| Arc::strong_count(arc) == 1)
                     {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
 
                 *reserved = false;
@@ -196,13 +181,13 @@ mod upgrade {
     static CONTEXT_ID: OnceLock<stdMutex<usize>> = OnceLock::new();
     impl Context {
         fn new() -> Self {
-            let mut context_id = CONTEXT_ID.get_or_init(|| stdMutex::new(0)).lock().unwrap();
-            *context_id += 1;
-
+            let mut context_id = CONTEXT_ID.get_or_init(|| stdMutex::new(0)).lock().unwrap();            
             let me = Self {
                 context_id: *context_id,
                 upgrade_id: None,
             };
+            *context_id += 1;
+
             println!("[context #{}] created...", me.context_id);
             me
         }
@@ -211,7 +196,7 @@ mod upgrade {
     struct Response;
     impl Response {
         async fn send(self, _stream: &mut Stream) {
-            println!("[response] writing to stream");
+            println!("[ response ] writing to stream");
         }
     }
 
@@ -229,19 +214,24 @@ mod upgrade {
             me
         }
         async fn handle_messages(&self) {
-            println!("[socket #{}] handling messages",
+            println!("[socket  #{}] handling messages",
                 self.context.upgrade_id.unwrap());
         }
         async fn close(self) {
-            println!("[socket #{}] closing...",
+            println!("[socket  #{}] closing...",
                 self.context.upgrade_id.unwrap());
         }
     }
 
-    async fn handle(mut c: Context) -> (Response, Option<UpgradeID>) {let requires_upgrade = true;
+    async fn handle(mut c: Context, handle_time: u64, before_upgrade: u64) -> (Response, Option<UpgradeID>) {let requires_upgrade = true;
         println!("[context #{}] handling", c.context_id);
 
         let mut upgrade_id = None;
+
+        let response = {
+            tokio::time::sleep(tokio::time::Duration::from_millis(handle_time)).await;
+            Response
+        };
 
         if requires_upgrade {
             let id = reserve_upgrade().await;
@@ -254,39 +244,45 @@ mod upgrade {
                 let Some(id) = c.upgrade_id
                     else {panic!("Context doesn't have upgrade id")};
 
-                let socket = Socket::new(c, id).await;
+                let socket = {
+                    tokio::time::sleep(tokio::time::Duration::from_millis(before_upgrade)).await;
+                    Socket::new(c, id).await
+                };
+
                 socket.handle_messages().await;
                 socket.close().await;
             });
         }
 
-        (Response, upgrade_id)
+        (response, upgrade_id)
     }
 
 
-    for (i, msecs) in [42, 128, 64, 55, 60, 72, 111].into_iter().enumerate() {
-        let stream = Arc::new(Mutex::new({
-            tokio::time::sleep(tokio::time::Duration::from_millis(msecs)).await;
-            Stream
-        }));
-        println!("[stream {i}] emitted (after {msecs} sleep)");
+    for (i, (__handle__, __before_upgrade__)) in [
+        (42, 128),
+        (64, 55),
+        (60, 72),
+        (111, 44),
+    ].into_iter().enumerate() {
+        let stream = Arc::new(Mutex::new(Stream));
+        println!("[stream   {i}] accepted");
 
         match tokio::spawn({
             let stream = stream.clone();
-            println!("[stream {i}] cloned");
+            println!("[stream   {i}] cloned");
 
             async move {
                 let stream = &mut *stream.lock().await;
-                let (res, upgrade_id) = handle(Context::new()).await;
+                let (res, upgrade_id) = handle(Context::new(), __handle__, __before_upgrade__).await;
                 res.send(stream).await;
                 upgrade_id
             }
         }).await {
             Ok(upgrade_id) => {
                 if let Some(id) = upgrade_id {
-                    println!("[stream {i}] handled: Ok(#{id})");
+                    println!("[stream   {i}] handled: Ok(#{id})");
                     set_stream(id, stream).await;
-                    println!("[stream {i}] requested upgrade to socket #{id}...");
+                    println!("[stream   {i}] requested upgrade to socket #{id}...");
                 }
             }
             Err(e) => eprintln!("error: {e}")
