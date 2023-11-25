@@ -18,7 +18,7 @@ mod upgrade {
 
     pub struct StreamCell {
         reserved: bool,
-        stream:   Option<Arc<Mutex<Stream>>>,
+        stream:   Option<Stream>//Option<Arc<Mutex<Stream>>>,
     }
 
     pub struct Stream;
@@ -55,7 +55,11 @@ mod upgrade {
     }
 
     /// SAFETY: This must be called after the corresponded `reserve_upgrade`
-    pub async unsafe fn set_stream(id: UpgradeID, stream: Arc<Mutex<Stream>>) {
+    pub async unsafe fn set_stream(
+        id: UpgradeID,
+        //stream: Arc<Mutex<Stream>>,
+        stream: Stream,
+    ) {
         #[cfg(debug_assertions)] assert!(
             UpgradeStreams().get().get(id.as_usize()).is_some_and(|cell| cell.is_just_reserved()),
             "Cell not reserved"
@@ -72,16 +76,20 @@ mod upgrade {
                 let Some(StreamCell { reserved, stream }) = (unsafe {UpgradeStreams().get_mut()}).get_mut(self.id.as_usize())
                     else {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
 
-                if !stream.as_ref().is_some_and(|arc| Arc::strong_count(arc) == 1)
-                    {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
+                //if !stream.as_ref().is_some_and(|arc| Arc::strong_count(arc) == 1)
+                //    {cx.waker().wake_by_ref(); return std::task::Poll::Pending};
+                if stream.is_none() {
+                    cx.waker().wake_by_ref(); return std::task::Poll::Pending;
+                }
 
                 *reserved = false;
                 std::task::Poll::Ready(unsafe {
-                    Mutex::into_inner(
-                        Arc::into_inner(
+                    //Mutex::into_inner(
+                    //    Arc::into_inner(
                             Option::take(stream)
-                                .unwrap_unchecked())
-                                    .unwrap_unchecked())})
+                                .unwrap_unchecked()//)
+                                    //.unwrap_unchecked())})
+                    })
             }
         }
 
@@ -287,7 +295,10 @@ mod upgrade {
             Ok(upgrade_id) => {
                 if let Some(id) = upgrade_id {
                     println!("[stream   {i}] handled: Ok(#{id})");
+
+                    let stream = Mutex::into_inner(Arc::into_inner(stream).unwrap());
                     unsafe {set_stream(id, stream).await};
+
                     println!("[stream   {i}] requested upgrade to socket #{id}...");
                 }
             }
