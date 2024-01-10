@@ -63,7 +63,7 @@ struct RequestWithRange {
 
         let mut headers = List::new();
 
-        let mut r = Reader::from(&buf);
+        let mut r = Reader::new(&buf);
         let mut start = 0; while r.peek().unwrap() != &b'\r' {
             let key_len = r.read_while(|b| b != &b':').len();
             r.consume(": ").unwrap();
@@ -96,7 +96,7 @@ struct RequestWithPtrAndLen {
 
         let mut headers = List::new();
 
-        let mut r = Reader::from(&buf);
+        let mut r = Reader::new(&buf);
         while r.peek().unwrap() != &b'\r' {
             let key = r.read_while(|b| b != &b':');
             let (kp, klen) = (key.as_ptr(), key.len());
@@ -134,7 +134,7 @@ macro_rules! benchmark {
                     assert!(req.header(d).is_none());
                 }
             })
-        }        
+        }
     )*};
 } benchmark! {
     RequestWithRange

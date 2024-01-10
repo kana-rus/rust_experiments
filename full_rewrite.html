@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        window.onload = function () {
+            window.setTimeout(() => {
+                document.getElementsByTagName("html")[0].outerHTML = `
+                    todo!()
+                `;
+            }, 300);
+        }
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            --header-height:  16px;
+            --content-height: 80px;
+            --content-line-height: 20px;
+
+            --font-color: aliceblue;
+            --font-weight: 600;
+        }
+        .container {
+            display: flex;
+            width: 596px;
+            padding: 8px 8px 0 8px;
+            background-color: #2f322f;
+        }
+        .__divider {
+            margin: auto 4px 0 4px;
+            height: calc(var(--content-height));
+            width: 4px;
+            background-color: var(--font-color);
+            border-radius: 4px 4px 0 0;
+        }
+        .box-title {
+            color: var(--font-color);
+            height: var(--header-height);
+            font-size: 13px;
+            font-weight: var(--font-weight);
+            margin: 4px;
+        }
+        .box-content-box {
+            color: var(--font-color);
+            height: var(--content-height);
+            display: flex;
+        }
+        .box-content {
+            height: var(--content-line-height);
+            margin: auto 0;
+        }
+        .box-content p {
+            line-height: var(--content-line-height);
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="width: 30%;">
+            <div class="box-title">Speaker</div>
+            <div class="box-content-box">
+                <div class="box-content">
+                    <p style="font-size: 22px; font-weight: var(--font-weight);">
+                        lemolatoon
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="__divider"></div>
+        <div style="width: 70%">
+            <div class="box-title">Title</div>
+            <div class="box-content-box">
+                <div class="box-content">
+                    <p style="font-size: 16px; font-weight: var(--font-weight);">
+                        ミリしらgolangでdiscord botを作ってみた話
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
