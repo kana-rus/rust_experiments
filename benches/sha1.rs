@@ -69,7 +69,7 @@ const CASES: &[(&[u8], &str)] = &[
         for (expected_hex, src) in CASES {
             let expected = decode_hex(expected_hex);
             let actual = {
-                let mut s = ::sha1::Sha1::new();
+                let mut s = <::sha1::Sha1 as ::sha1::Digest>::new();
                 s.update(std::hint::black_box(src.as_bytes()));
                 s.finalize()
             };

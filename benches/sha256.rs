@@ -227,13 +227,13 @@ const HMAC_CASES: &[(&[u8], &[u8], &[u8])] = &[
     );
 }
 #[bench] fn rustcrypto_sha2_sha256(b: &mut test::Bencher) {
-    use ::sha2::Digest as _;
+    use ::sha2::Digest;
 
     b.iter(||
         for (expected_hex, input) in SHA256_CASES {
             let expected = decode_hex(expected_hex);
             let actual = {
-                let mut s = ::sha2::Sha256::new();
+                let mut s = <::sha2::Sha256 as Digest>::new();
                 s.update(std::hint::black_box(input));
                 s.finalize()
             };

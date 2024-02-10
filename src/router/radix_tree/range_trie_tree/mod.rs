@@ -1,6 +1,13 @@
-mod pattern; pub use pattern::{Pattern, Section};
-mod route; use route::Route;
-mod node; pub use node::Node;
+mod pattern;
+pub use pattern::Pattern;
+#[cfg(test)]
+pub(crate) use pattern::Section;
+
+mod route;
+use route::Route;
+
+mod node;
+pub use node::Node;
 
 use crate::router::{Method, HandleFunc};
 
