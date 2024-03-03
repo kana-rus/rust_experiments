@@ -13,11 +13,12 @@ libflate = "2.0.0"
 worker = "0.0.18"
 byte_reader = "1.0.0"
 serde = "1.0"
+serde_json = "1.0.114"
 base64 = "0.21.6"
 hmac-sha256 = "1.1.7"
 sha2 = { version = "=0.11.0-pre.0" }
 sha1 = { version = "=0.11.0-pre.0" }
 hmac = { version = "=0.13.0-pre.0" }
-ohkami = { version = "0.12", features = ["rt_tokio"] }
+ohkami = { version = "0.15", features = ["rt_tokio"] }
 async-trait = "0.1.77"
 reqwest = "0.11.24"
