@@ -20,3 +20,4 @@ sha1 = { version = "=0.11.0-pre.0" }
 hmac = { version = "=0.13.0-pre.0" }
 ohkami = { version = "0.12", features = ["rt_tokio"] }
 async-trait = "0.1.77"
+reqwest = "0.11.24"
