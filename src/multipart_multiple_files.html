@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sending multiple files with multipart/form-data </title>
+</head>
+<body>
+    <form action="http://localhost:5050" method="post" enctype="multipart/form-data">
+        <label for="user-name">ユーザー名</label>
+        <input name="user-name" type="text" id="user-name">
+
+        <label for="photos">写真 (複数枚可)</label>
+        <input type="file" multiple name="photos" id="photos">
+
+        <input type="submit" value="投稿">
+    </form>
+</body>
+</html>
