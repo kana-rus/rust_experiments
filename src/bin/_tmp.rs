@@ -1,39 +1,84 @@
-use ohkami::prelude::*;
+fn main() {
+    #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+    enum Header {
+        /* entity */
+        CacheControl,
+        Connection,
+        ContentDisposition,
+        ContentEncoding,
+        ContentLanguage,
+        ContentLength,
+        ContentLocation,
+        ContentType,
+        Date,
+        Link,
+        SecWebSocketProtocol,
+        SecWebSocketVersion,
+        Trailer,
+        TransferEncoding,
+        Upgrade,
+        Via,
 
-struct RequestLogger;
-impl FrontFang for RequestLogger {
-    type Error = std::convert::Infallible;
-    fn bite(&self, req: &mut Request) -> impl std::future::Future<Output = Result<(), Self::Error>> + Send {
-        println!("{req:#?}");
-        println!("\n\
-        ==================\n\
-        [payload formated]\n\
-        {}\n\
-        ==================\n\
-        ",
-            std::str::from_utf8(req.payload().unwrap_or_default()).unwrap(),
-        );
-        async {Ok(())}
+        /* response only */
+        AcceptRange,
+        AcceptRanges,
+        AccessControlAllowCredentials,
+        AccessControlAllowHeaders,
+        AccessControlAllowMethods,
+        AccessControlAllowOrigin,
+        AccessControlExposeHeaders,
+        AccessControlMaxAge,
+        Age,
+        Allow,
+        AltSvc,
+        CacheStatus,
+        CDNCacheControl,
+        ContentRange,
+        ContentSecurityPolicy,
+        ContentSecurityPolicyReportOnly,
+        Etag,
+        Expires,
+        Location,
+        ProxyAuthenticate,
+        ReferrerPolicy,
+        Refresh,
+        RetryAfter,
+        SecWebSocketAccept,
+        Server,
+        SetCookie,
+        StrictTransportSecurity,
+        Vary,
+        XContentTypeOptions,
+        XFrameOptions,
+
+        /* request only */
+        Accept,
+        AcceptEncoding,
+        AcceptLanguage,
+        AccessControlRequestHeaders,
+        AccessControlRequestMethod,
+        Authorization,
+        Cookie,
+        Expect,
+        Forwarded,
+        From,
+        Host,
+        IfMatch,
+        IfModifiedSince,
+        IfNoneMatch,
+        IfRange,
+        IfUnmodifiedSince,
+        MaxForwards,
+        Origin,
+        ProxyAuthorization,
+        Range,
+        Referer,
+        SecWebSocketExtensions,
+        SecWebSocketKey,
+        TE,
+        UserAgent,
+        UpgradeInsecureRequests,
+
+        Custom(&'static [u8]),
     }
-}
-
-struct ForceEmptyOK;
-impl BackFang for ForceEmptyOK {
-    type Error = std::convert::Infallible;
-    fn bite(&self, res: &mut Response, _req: &Request) -> impl std::future::Future<Output = Result<(), Self::Error>> + Send {
-        if _req.method().isGET() && _req.path() != "/favicon.ico" {
-            // pass
-        } else {
-            *res = Response::OK();
-        }
-        async {Ok(())}
-    }
-}
-
-#[tokio::main]
-async fn main() {
-    Ohkami::new(()).howl_with((
-        RequestLogger,
-        ForceEmptyOK,
-    ), "localhost:5050").await
 }
