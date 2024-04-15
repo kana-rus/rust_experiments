@@ -60,7 +60,9 @@ async fn hello(Path(name): Path<String>) -> Json<Message> {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
 
     axum::serve(
         tokio::net::TcpListener::bind("localhost:3000").await.unwrap(),
