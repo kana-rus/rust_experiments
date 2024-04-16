@@ -26,3 +26,4 @@ tower = "0.4.13"
 tracing = "0.1.4"
 tracing-subscriber = "0.3.18"
 ohkami = { package = "ohkami", git = "https://github.com/kana-rus/ohkami.git", features = ["rt_tokio"] }
+yarte = "0.15"

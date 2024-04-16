@@ -45,6 +45,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "annotate-snippets"
+version = "0.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccaf7e9dfbb6ab22c82e473cd1a8a7bd313c19a5b7e40970f3d89ef5a5c9e81e"
+dependencies = [
+ "unicode-width",
+ "yansi-term",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -423,6 +433,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7e3352a27098ba6b09546e5f13b15165e6a88b5c2723afecb3ea9576b27e3ea"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -499,6 +515,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7762d17f1241643615821a8455a0b2c3e803784b058693d990b11f2dce25a0ca"
 
 [[package]]
+name = "derive_more"
+version = "0.99.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -520,6 +549,12 @@ dependencies = [
  "crypto-common 0.2.0-pre.3",
  "subtle",
 ]
+
+[[package]]
+name = "dtoa"
+version = "1.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcbb2bf8e87535c23f7a8a321e364ce21462d0ff10cb6407820e8e96dfff6653"
 
 [[package]]
 name = "encoding_rs"
@@ -620,6 +655,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "worker",
+ "yarte",
 ]
 
 [[package]]
@@ -1550,6 +1586,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "prettyplease"
+version = "0.1.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c8646e95016a7a6c4adea95bafa8a16baab64b583356217f2c85db4a39d9a86"
+dependencies = [
+ "proc-macro2",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1688,6 +1734,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
+name = "rustc_version"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
+dependencies = [
+ "semver",
+]
+
+[[package]]
 name = "rustix"
 version = "0.37.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1772,6 +1827,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92d43fe69e652f3df9bdc2b85b2854a0825b86e4fb76bc44d945137d053639ca"
 
 [[package]]
 name = "serde"
@@ -2102,6 +2163,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "tower"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2221,6 +2291,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicode-width"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
+
+[[package]]
+name = "unicode-xid"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
+
+[[package]]
 name = "url"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2230,6 +2312,22 @@ dependencies = [
  "idna",
  "percent-encoding",
 ]
+
+[[package]]
+name = "v_eval"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dd8b599d797eb038d0dde9a3860aacb6bbba3bffa4ac64f807c8673820cc9d9"
+dependencies = [
+ "regex",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "v_htmlescape"
+version = "0.15.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e8257fbc510f0a46eb602c10215901938b5c2a7d5e70fc11483b1d3c9b5b18c"
 
 [[package]]
 name = "valuable"
@@ -2606,6 +2704,100 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "yansi-term"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe5c30ade05e61656247b2e334a031dfd0cc466fadef865bdcdea8d537951bf1"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
+name = "yarte"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dfce1df93f3b16e5272221a559e60bbbaaa71dbc042a43996d223e51a690aab2"
+dependencies = [
+ "yarte_derive",
+ "yarte_helpers",
+]
+
+[[package]]
+name = "yarte_codegen"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a79312078b97a195de91a8c1457c2e0d7abd97e6e605f3cdeb01b3c105d2cff"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "yarte_helpers",
+ "yarte_hir",
+]
+
+[[package]]
+name = "yarte_derive"
+version = "0.15.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b296edd7e1a81717b6f794baa2de8dfe89646050847161550b2d963b3ca6fe80"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "yarte_codegen",
+ "yarte_helpers",
+ "yarte_hir",
+ "yarte_parser",
+]
+
+[[package]]
+name = "yarte_helpers"
+version = "0.15.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0d1076f8cee9541ea5ffbecd9102f751252c91f085e7d30a18a3ce805ebd3ee"
+dependencies = [
+ "dtoa",
+ "itoa",
+ "prettyplease",
+ "serde",
+ "syn 1.0.109",
+ "toml",
+ "v_htmlescape",
+]
+
+[[package]]
+name = "yarte_hir"
+version = "0.15.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dee42d2f704a3b1d8bc111d47a705d1302a0943d85e4c230f4e8300ee0dde4a6"
+dependencies = [
+ "derive_more",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "v_eval",
+ "v_htmlescape",
+ "yarte_helpers",
+ "yarte_parser",
+]
+
+[[package]]
+name = "yarte_parser"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "538f72049cf7104e12d5c444048d112cb8fc788a31308afd912442a381ba860c"
+dependencies = [
+ "annotate-snippets",
+ "derive_more",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn 1.0.109",
+ "unicode-xid",
+ "yarte_helpers",
 ]
 
 [[package]]
