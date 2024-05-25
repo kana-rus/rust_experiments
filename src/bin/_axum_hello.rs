@@ -1,13 +1,13 @@
 use axum::{Router, routing::get};
 
-use std::{pin::Pin, future::Future};
-use axum::{body::Body, http::Request};
-use tower::{Layer, Service};
+// use std::{pin::Pin, future::Future};
+// use axum::{body::Body, http::Request};
+// use tower::{Layer, Service};
 
 use serde::{Serialize, Deserialize};
 use axum::extract::{Path, Json};
 
-
+/*
 #[derive(Clone)]
 struct Logger;
 impl<S: Service<Request<Body>>> Layer<S> for Logger {
@@ -44,6 +44,7 @@ where
         })
     }
 }
+*/
 
 
 #[derive(Serialize, Deserialize)]
@@ -60,14 +61,14 @@ async fn hello(Path(name): Path<String>) -> Json<Message> {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
+    // tracing_subscriber::fmt()
+    //     .with_max_level(tracing::Level::INFO)
+    //     .init();
 
     axum::serve(
         tokio::net::TcpListener::bind("localhost:3000").await.unwrap(),
         Router::new()
             .route("/hello/:name", get(hello))
-            .layer(Logger)
+            // .layer(Logger)
     ).await.unwrap()
 }
