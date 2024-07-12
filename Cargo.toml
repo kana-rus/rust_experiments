@@ -31,3 +31,6 @@ yarte = "0.15"
 hashbrown = "0.14.5"
 sqlx = { version = "0.7.4", features = ["postgres", "runtime-tokio-native-tls"] }
 dotenvy = { version = "0.15" }
+futures-core = "0.3"
+rand = { version = "0.8", features = ["small_rng"] }
+rand_chacha = "0.3.1"

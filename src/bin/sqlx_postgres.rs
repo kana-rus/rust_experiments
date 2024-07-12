@@ -25,17 +25,18 @@ struct Todo {
 }
 
 async fn create_todo(pool: &sqlx::PgPool, todo: Todo) -> Result<Todo, sqlx::Error> {
-    sqlx::query_as!(Todo,
-        r#"
-        INSERT INTO todo (id, title, description, done)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, title, description, done AS doney
-        "#,
-        todo.id,
-        todo.title,
-        todo.description,
-        todo.doney
-    )
-    .fetch_one(pool)
-    .await
+    // sqlx::query_as!(Todo,
+    //     r#"
+    //     INSERT INTO todo (id, title, description, done)
+    //     VALUES ($1, $2, $3, $4)
+    //     RETURNING id, title, description, done AS doney
+    //     "#,
+    //     todo.id,
+    //     todo.title,
+    //     todo.description,
+    //     todo.doney
+    // )
+    // .fetch_one(pool)
+    // .await
+    todo!()
 }
